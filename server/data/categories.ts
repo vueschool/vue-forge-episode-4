@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker'
-import { Category } from '~/types'
+import { CategoryT } from '~/types'
 
-export const categories : Category[] = [
+export const categories : CategoryT[] = [
 	{ uuid: faker.string.uuid(), name: 'Art', slug: 'art' },
 	{ uuid: faker.string.uuid(), name: 'Comics & illustration', slug: 'comics-and-illustration'},
 	{ uuid: faker.string.uuid(), name: 'Design & Tech', slug: 'design-and-tech'},

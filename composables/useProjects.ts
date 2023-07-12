@@ -19,11 +19,20 @@ export const useProjects = () => {
 		project.value = response.data
 	}
 	
+	
+	const create = async (data: ProjectT) => {
+		const { data: responseData } = await useFetch('/api/projects', { method: 'POST', body: { ...data } })
+		const response = useApiData(responseData)
+		projects.value = response.data
+		
+		return response
+	}
 	return {
 		item: project,
 		list: projects,
 		pagination,
 		
+		create,
 		fetchAll,
 		fetchOne,
 	}

@@ -10,7 +10,7 @@ export type User = {
 	avatar: string
 }
 
-export type Category = {
+export type CategoryT = {
 	uuid: UuidT
 	name: string
 	slug: string
@@ -19,10 +19,10 @@ export type Category = {
 export type ProjectT = {
 	uuid: UuidT
 	title: string
-	slurp: string
+	excerpt: string
 	description: string
 	image: string
-	category: Category
+	category: CategoryT
 	pledged: Number
 	backers: Number
 	funded: string

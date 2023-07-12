@@ -15,6 +15,11 @@ const finishesAt = computed(() => {
 onMounted(() => {
 	fetchOne({ uuid : props.uuid })
 })
+
+watch(() => props.uuid, (value) => {
+	fetchOne({ uuid: value })
+}, { deep: true })
+
 </script>
 
 

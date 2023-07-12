@@ -1,11 +1,8 @@
-<script setup lang="ts">
-
-</script>
-
+<script setup lang="ts"></script>
 
 <template>
 	<div class="flex-col flex items-center justify-start relative">
 		<NavBar />
-		<ProjectsList class="mt-24"/>
+		<ProjectsForm class="mt-24"/>
 	</div>
 </template>

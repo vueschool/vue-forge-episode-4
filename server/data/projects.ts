@@ -15,7 +15,7 @@ for (const amount of new Array(150).fill(0)) {
 	projects.push({
 		uuid: faker.string.uuid(),
 		title: faker.lorem.words({min: 3, max: 5}),
-		slurp: `${description.substring(0, 130)} ...`,
+		excerpt: `${description.substring(0, 130)} ...`,
 		description,
 		image: faker.image.urlPicsumPhotos(),
 		category: faker.helpers.uniqueArray(categories, 1)[0],

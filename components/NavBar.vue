@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Category, User } from '~/types'
+import { CategoryT, User } from '~/types'
 const {data: categoriesData} = useFetch('/api/categories')
-const categories = computed<Category[]>(() => categoriesData.value?.data || [])
+const categories = computed<CategoryT[]>(() => categoriesData.value?.data || [])
 
 
 const {data: userData} = useFetch('/api/auth/me')
@@ -9,10 +9,10 @@ const user = computed<User>(() => userData.value?.data)
 </script>
 
 <template>
-	<div class="bg-primary text-primary-content w-full">
+	<div class="bg-primary text-primary-content w-full fixed z-20">
 		<div class="navbar max-w-7xl mx-auto flex items-center justify-between">
 			<div class="flex-1">
-				<a class="btn btn-ghost normal-case text-xl">DecentralSpark</a>
+				<nuxt-link to="/" class="btn btn-ghost normal-case text-xl">DecentralSpark</nuxt-link>
 			</div>
 			<div class="flex-none">
 				<ul class="menu menu-horizontal px-1">
@@ -23,7 +23,9 @@ const user = computed<User>(() => userData.value?.data)
 			</div>
 			<div class="flex-none gap-2">
 			<div class="form-control">
-				<input type="text" placeholder="Search" class="input input-bordered w-24 md:w-auto" />
+				<nuxt-link :to="{ name: 'projects-create' }" class="btn btn-accent btn-sm">
+					Create Your Project
+				</nuxt-link>
 			</div>
 			<div class="dropdown dropdown-end">
 				<div tabindex="0" class="btn btn-ghost btn-circle avatar">
