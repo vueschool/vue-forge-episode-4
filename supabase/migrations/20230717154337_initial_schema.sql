@@ -19,11 +19,11 @@ create table "public"."projects" (
     "pledged" numeric not null,
     "backers" integer not null,
     "funded" character varying(255) not null,
-    "softcap" character varying(255) not null,
-    "hardcap" character varying(255) not null,
-    "finishesat" timestamp without time zone not null,
-    "createdat" timestamp without time zone not null,
-    "lastupdatedat" timestamp without time zone not null
+    "softCap" character varying(255) not null,
+    "hardCap" character varying(255) not null,
+    "finishesAt" timestamp without time zone not null,
+    "createdAt" timestamp without time zone not null,
+    "lastUpdatedAt" timestamp without time zone not null
 );
 
 ALTER TABLE "public"."projects" ENABLE ROW LEVEL SECURITY;
@@ -33,8 +33,8 @@ CREATE POLICY view_projects_policy ON "public"."projects" FOR SELECT
 
 create table "public"."users" (
     "uuid" uuid not null default gen_random_uuid(),
-    "firstname" character varying(255) not null,
-    "lastname" character varying(255) not null,
+    "firstName" character varying(255) not null,
+    "lastName" character varying(255) not null,
     "username" character varying(255) not null,
     "bio" text,
     "email" character varying(255) not null,

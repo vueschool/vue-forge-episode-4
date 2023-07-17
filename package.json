@@ -8,7 +8,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "db:reset": "npx supabase db reset && yarn db:types",
+    "db:types": "supabase gen types typescript --local > ./supabase/schema.ts"
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
