@@ -16,7 +16,7 @@
     "@nuxt/devtools": "latest",
     "@nuxtjs/supabase": "^0.3.8",
     "@types/node": "^18",
-    "nuxt": "^3.6.1"
+    "nuxt": "^3.6.3"
   },
   "dependencies": {
     "@faker-js/faker": "^8.0.2",

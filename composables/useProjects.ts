@@ -33,9 +33,14 @@ export const useProjects = () => {
   };
 
   const fetchOne = async ({ uuid }: { uuid: UuidT }) => {
-    const { data } = await useFetch(`/api/projects/${uuid}`);
-    const response = useApiData(data);
-    project.value = response.data;
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("uuid", uuid);
+    if (error || !data) {
+      throw new Error(error?.message || "Error fetching project");
+    }
+    project.value = data.at(0);
   };
 
   const create = async (data: ProjectT) => {

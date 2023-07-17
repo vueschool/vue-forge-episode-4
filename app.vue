@@ -1,11 +1,11 @@
 <script setup lang="ts">
 const colorMode = useColorMode();
 
-colorMode.value = 'cupcake';
+colorMode.value = "cupcake";
 </script>
 
 <template>
   <div>
-    <RouterView />
+    <NuxtPage />
   </div>
 </template>
