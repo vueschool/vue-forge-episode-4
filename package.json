@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
