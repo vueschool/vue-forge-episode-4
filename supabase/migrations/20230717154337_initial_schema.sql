@@ -29,6 +29,8 @@ create table "public"."projects" (
 ALTER TABLE "public"."projects" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY view_projects_policy ON "public"."projects" FOR SELECT
   USING (true);
+CREATE POLICY create_project_policy ON "public"."projects" FOR INSERT
+  WITH CHECK (true);
 
 
 create table "public"."users" (

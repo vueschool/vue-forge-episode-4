@@ -1,4 +1,3 @@
-import { useApiData } from "~/composables/useApiData";
 import { PaginationT, ProjectT, UuidT } from "~/types";
 
 export const useProjects = () => {
@@ -43,15 +42,17 @@ export const useProjects = () => {
     project.value = data.at(0);
   };
 
-  const create = async (data: ProjectT) => {
-    const { data: responseData } = await useFetch("/api/projects", {
-      method: "POST",
-      body: { ...data },
-    });
-    const response = useApiData(responseData);
-    projects.value = response.data;
+  const create = async (project: ProjectT) => {
+    const { data: newProject, error } = await supabase
+      .from("projects")
+      .insert(project);
 
-    return response;
+    if (error || !newProject)
+      throw new Error(error?.message || "Error creating project");
+
+    projects.value.push(newProject);
+
+    return newProject;
   };
   return {
     item: project,

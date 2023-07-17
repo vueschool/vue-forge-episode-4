@@ -1,11 +1,14 @@
-import { useApiData } from "~/composables/useApiData";
-import { PaginationT, CategoryT, UuidT } from "~/types";
+import { PaginationT, CategoryT, UuidT, ProjectT } from "~/types";
 
 export const useCategories = () => {
   const supabase = useTypedSupabaseClient();
-  const category = ref<CategoryT | any>({});
+  const category = ref<
+    {
+      projects: ProjectT[];
+    } & CategoryT
+  >();
   const categories = ref<CategoryT[]>([]);
-  const pagination = ref<PaginationT | any>({});
+  const pagination = ref<PaginationT>();
 
   const fetchAll = async ({ page }: { page: number } = { page: 1 }) => {
     const { getPaginationObject, getRangeEnd, getRangeStart } = usePaginator({
@@ -29,9 +32,15 @@ export const useCategories = () => {
   };
 
   const fetchOne = async ({ uuid }: { uuid: UuidT }) => {
-    const { data } = await useFetch(`/api/categories/${uuid}`);
-    const response = useApiData(data);
-    category.value = response.data;
+    console.log(uuid);
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*, projects(*)")
+      .eq("uuid", uuid)
+      .single();
+    if (error || !data)
+      throw new Error(error?.message || "Error fetching category");
+    category.value = data;
   };
 
   return {
