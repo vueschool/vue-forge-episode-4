@@ -7,6 +7,8 @@ const props = defineProps<ProjectProps>();
 
 const { item: project, fetchOne } = useProjects();
 fetchOne({ uuid: props.uuid });
+
+const showPledgeForm = ref(false);
 </script>
 
 <template>
@@ -63,12 +65,16 @@ fetchOne({ uuid: props.uuid });
           <div
             class="inset-x-0 bottom-0 flex flex-col items-center justify-center w-full px-8 space-y-4 text-center"
           >
-            <button class="btn btn-primary">Fund this Project</button>
-            <span class="text-xs text-gray-400">
-              All or nothing, this project will only be funded if it reaches at
-              least the soft cap by
-              <Date :date="project.finishesAt" />
-            </span>
+            <div v-if="!showPledgeForm" @click="showPledgeForm = true">
+              <button class="btn btn-primary">Fund this Project</button>
+              <br />
+              <span class="text-xs text-gray-400">
+                All or nothing, this project will only be funded if it reaches
+                at least the soft cap by
+                <Date :date="project.finishesAt" />
+              </span>
+            </div>
+            <ProjectPledgeForm v-if="showPledgeForm" />
           </div>
         </div>
       </div>
