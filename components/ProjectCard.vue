@@ -1,74 +1,77 @@
 <script setup lang="ts">
-type ProjectCardProps = {
-	uuid?: string | null | undefined,
-	title?: string,
-	excerpt?: string,
-	image?: string,
-	category?: string,
-	softCap?: string,
-	hardCap?: string,
-	backers?: number,
-	funded?: number,
-	pledged?: number
-	finishesAt?: Date | string | number
-}
+import type { Database } from "@/supabase/schema";
 
-const props = defineProps<ProjectCardProps>()
+const props = defineProps<{
+  project: Database["public"]["Tables"]["projects"]["Row"];
+  categoryName?: string;
+}>();
 </script>
 
-
 <template>
-	<div class="card col-span-1 glass flex flex-col items-start justify-start space-y-4 shadow">
-		<figure>
-			<img :src="image" :alt="title" class="w-[500px]" />
-		</figure>
-		<div class="card-body">
-			<h2 class="card-title capitalize min-h-12 flex items-start justify-start">
-				<span>{{ title }}</span>
-			</h2>
-			<p class="h-36">
-				{{ excerpt }}
-			</p>
+  <div
+    class="flex flex-col items-start justify-start col-span-1 space-y-4 shadow card glass"
+  >
+    <figure>
+      <img
+        :src="project.image"
+        :alt="project.title"
+        class="w-[500px] aspect-video object-cover"
+      />
+    </figure>
+    <div class="card-body">
+      <h2 class="flex items-start justify-start capitalize card-title min-h-12">
+        <span>{{ project.title }}</span>
+      </h2>
+      <p>
+        {{ project.excerpt }}
+      </p>
 
-			<div class="flex items-center justify-between">
-				<div class="badge badge-secondary badge-outline">
-					<span>Backers: </span>
-					{{ backers }}
-				</div>
-				
-				<div class="badge badge-accent badge-outline">
-					<span>Funded: </span>
-					<Money :amount="funded" short />
-				</div>
-			</div>
-			<div class="w-full">
-				<progress class="progress progress-primary w-full" :value="pledged" max="100"></progress>
-			</div>
-	
-			<div class="flex items-center justify-between">
-				<div class="badge badge-primary badge-outline text-xs">{{ category }}</div>
-				<span class="text-primary"><Money :amount="softCap" short/> / <Money :amount="hardCap" short/></span>
-			</div>
-	
-			<div class="card-actions justify-between mt-8">
-				<span class="text-sm text-primary">
-					<Counter :date="finishesAt" />
-				</span>
-				<nuxt-link
-					v-if="uuid"
-					:to="{ name: 'projects-uuid', params: { uuid } }"
-					class="btn btn-primary btn-sm"
-				>
-					More details!
-				</nuxt-link>
-				
-				<span
-					v-else
-					class="btn btn-primary btn-sm"
-				>
-					More details!
-				</span>
-			</div>
-		</div>
-	</div>
+      <div class="flex items-center justify-between">
+        <div class="badge badge-secondary badge-outline">
+          <span>Backers: </span>
+          {{ project.backers }}
+        </div>
+
+        <div class="badge badge-accent badge-outline">
+          <span>Pledged: </span>
+          <Money :amount="project.pledged" short />
+        </div>
+      </div>
+      <div class="w-full">
+        <progress
+          class="w-full progress progress-primary"
+          :value="project.pledged"
+          :max="Number(project.hardCap)"
+        ></progress>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <div
+          v-if="categoryName"
+          class="text-xs badge badge-primary badge-outline"
+        >
+          {{ categoryName }}
+        </div>
+        <span class="text-primary"
+          ><Money :amount="project.softCap" short /> /
+          <Money :amount="project.hardCap" short
+        /></span>
+      </div>
+
+      <div class="justify-between mt-8 card-actions">
+        <span class="text-sm text-primary">
+          <Counter :date="project.finishesAt" />
+        </span>
+        <nuxt-link
+          v-if="project.uuid"
+          :to="{ name: 'projects-uuid', params: { uuid: project.uuid } }"
+          class="btn btn-primary btn-sm"
+        >
+          More details!
+        </nuxt-link>
+
+        <span v-else class="btn btn-primary btn-sm"> More details! </span>
+      </div>
+    </div>
+  </div>
 </template>

@@ -15,5 +15,10 @@ module.exports = {
   daisyui: {
     themes: ["cupcake", "dark", "cmyk"],
   },
-}
-
+  safelist: [
+    "border-t-warning",
+    "border-t-error",
+    "border-t-success",
+    "border-t-info",
+  ],
+};
