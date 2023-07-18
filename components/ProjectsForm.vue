@@ -13,11 +13,11 @@ const { list: categories, fetchAll } = useCategories();
 fetchAll();
 
 const form = reactive({
-  title: null,
-  description: null,
-  image: null,
-  categoryUuid: null,
-  finishesAt: null,
+  title: "",
+  description: "",
+  image: "",
+  categoryUuid: "",
+  finishesAt: "",
   softCap: 0,
   hardCap: 0,
 });
@@ -75,7 +75,12 @@ const addImage = () => {
 };
 
 const submitForm = async () => {
-  const { data } = await create(form);
+  const { data } = await create({
+    ...form,
+    hardCap: form.hardCap.toString(),
+    softCap: form.softCap.toString(),
+    excerpt: `${form.description.substring(0, 130)} ...`,
+  });
 
   const router = useRouter();
   await router.push(`/projects/${data.uuid}`);
@@ -271,21 +276,30 @@ const submitForm = async () => {
       </form>
       <div class="h-full col-span-4">
         <div class="max-w-[500px] px-8">
-          <ProjectCard
-            class="fixed w-[500px]"
-            :backers="backers"
-            :pledged="pledged"
-            :funded="funded"
-            :finishesAt="finishesAt"
-            :category="category?.name ?? 'Some Category'"
-            :title="form.title ?? 'Your title here'"
-            :image="form.image ?? 'https://placehold.co/500x320'"
-            :excerpt="
-              form.description
-                ? `${form?.description?.substring(0, 130)}...`
-                : 'This is a description of your project. You can change it in the form. You have up to 130 characters to describe your project.'
-            "
-          />
+          <ClientOnly>
+            <ProjectCard
+              class="fixed w-[500px]"
+              :project="{
+                ...form,
+                backers,
+                pledged,
+                funded: funded.toString(),
+                finishesAt: finishesAt.toString(),
+                title: form.title || 'Your title here',
+                image: form.image || 'https://placehold.co/500x320',
+                excerpt: form.description
+                  ? `${form?.description?.substring(0, 130)}...`
+                  : 'This is a description of your project. You can change it in the form. You have up to 130 characters to describe your project.',
+                categoryUuid: form.categoryUuid,
+                createdAt: new Date().toString(),
+                lastUpdatedAt: new Date().toString(),
+                hardCap: form.hardCap.toString(),
+                softCap: form.softCap.toString(),
+                uuid: '',
+              }"
+              :category-name="category?.name ?? 'Some Category'"
+            />
+          </ClientOnly>
         </div>
       </div>
     </div>

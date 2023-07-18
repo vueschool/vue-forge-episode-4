@@ -87,7 +87,7 @@ INSERT INTO
     excerpt,
     description,
     image,
-    category_uuid,
+    "categoryUuid",
     pledged,
     backers,
     funded,

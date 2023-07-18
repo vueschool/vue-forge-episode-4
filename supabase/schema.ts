@@ -55,7 +55,7 @@ export interface Database {
       projects: {
         Row: {
           backers: number
-          category_uuid: string
+          categoryUuid: string
           createdAt: string
           description: string
           excerpt: string
@@ -70,24 +70,24 @@ export interface Database {
           uuid: string
         }
         Insert: {
-          backers: number
-          category_uuid: string
-          createdAt: string
+          backers?: number
+          categoryUuid: string
+          createdAt?: string
           description: string
           excerpt: string
           finishesAt: string
-          funded: string
+          funded?: string
           hardCap: string
           image: string
-          lastUpdatedAt: string
-          pledged: number
+          lastUpdatedAt?: string
+          pledged?: number
           softCap: string
           title: string
           uuid?: string
         }
         Update: {
           backers?: number
-          category_uuid?: string
+          categoryUuid?: string
           createdAt?: string
           description?: string
           excerpt?: string
@@ -103,8 +103,8 @@ export interface Database {
         }
         Relationships: [
           {
-            foreignKeyName: "projects_category_uuid_fkey"
-            columns: ["category_uuid"]
+            foreignKeyName: "projects_categoryUuid_fkey"
+            columns: ["categoryUuid"]
             referencedRelation: "categories"
             referencedColumns: ["uuid"]
           }

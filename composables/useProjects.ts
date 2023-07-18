@@ -42,7 +42,7 @@ export const useProjects = () => {
     project.value = data.at(0);
   };
 
-  const create = async (project: ProjectT) => {
+  const create = async (project: Partial<ProjectT>) => {
     const { data: newProject, error } = await supabase
       .from("projects")
       .insert(project);
@@ -54,6 +54,7 @@ export const useProjects = () => {
 
     return newProject;
   };
+
   return {
     item: project,
     list: projects,

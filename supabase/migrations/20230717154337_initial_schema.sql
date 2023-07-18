@@ -15,15 +15,15 @@ create table "public"."projects" (
     "excerpt" text not null,
     "description" text not null,
     "image" character varying(255) not null,
-    "category_uuid" uuid not null,
-    "pledged" numeric not null,
-    "backers" integer not null,
-    "funded" character varying(255) not null,
+    "categoryUuid" uuid not null,
+    "pledged" numeric not null default 0,
+    "backers" integer not null default 0,
+    "funded" character varying(255) not null default '0',
     "softCap" character varying(255) not null,
     "hardCap" character varying(255) not null,
     "finishesAt" timestamp without time zone not null,
-    "createdAt" timestamp without time zone not null,
-    "lastUpdatedAt" timestamp without time zone not null
+    "createdAt" timestamp without time zone not null default now(),
+    "lastUpdatedAt" timestamp without time zone not null default now()
 );
 
 ALTER TABLE "public"."projects" ENABLE ROW LEVEL SECURITY;
@@ -60,8 +60,8 @@ alter table "public"."projects" add constraint "projects_pkey" PRIMARY KEY using
 
 alter table "public"."users" add constraint "users_pkey" PRIMARY KEY using index "users_pkey";
 
-alter table "public"."projects" add constraint "projects_category_uuid_fkey" FOREIGN KEY (category_uuid) REFERENCES categories(uuid) not valid;
+alter table "public"."projects" add constraint "projects_categoryUuid_fkey" FOREIGN KEY ("categoryUuid") REFERENCES categories(uuid) not valid;
 
-alter table "public"."projects" validate constraint "projects_category_uuid_fkey";
+alter table "public"."projects" validate constraint "projects_categoryUuid_fkey";
 
 
