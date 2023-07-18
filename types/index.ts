@@ -1,8 +1,6 @@
 import type { Database } from "@/supabase/schema";
 export type UuidT = string;
 
-export type User = Database["public"]["Tables"]["users"]["Row"];
-
 export type CategoryT = Database["public"]["Tables"]["categories"]["Row"];
 
 export type ProjectT = Database["public"]["Tables"]["projects"]["Row"] & {
