@@ -13,23 +13,30 @@
     "db:types": "supabase gen types typescript --local > ./supabase/schema.ts"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.0.2",
     "@nuxt/devtools": "latest",
     "@nuxtjs/supabase": "^0.3.8",
     "@types/node": "^18",
-    "@faker-js/faker": "^8.0.2",
     "nuxt": "^3.6.3",
     "supabase": "^1.77.9"
   },
   "dependencies": {
+    "@kadena/client": "^1.0.0-alpha.4",
+    "@kadena/pactjs": "^0.3.0",
+    "@kadena/pactjs-cli": "^1.0.0-alpha.4",
     "@nuxtjs/color-mode": "^3.3.0",
     "@nuxtjs/tailwindcss": "^6.8.0",
     "@vueuse/core": "^10.2.1",
     "@vueuse/nuxt": "^10.2.1",
+    "@wagmi/core": "^1.3.8",
+    "@web3modal/ethereum": "^2.7.0",
+    "@web3modal/html": "^2.7.0",
     "autoprefixer": "^10.4.14",
     "daisyui": "^3.1.7",
     "dotenv": "^16.3.1",
     "nanoid": "^4.0.2",
     "postcss": "^8.4.24",
-    "tailwindcss": "^3.3.2"
+    "tailwindcss": "^3.3.2",
+    "viem": "^1.3.0"
   }
 }

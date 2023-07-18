@@ -7,8 +7,17 @@ export default defineNuxtConfig({
     "@nuxtjs/supabase",
     "@vueuse/nuxt",
   ],
+  runtimeConfig: {
+    public: {
+      WALLET_CONNECT_PROJECT_ID: "",
+    },
+  },
   colorMode: {
     preference: "cupcake", // default theme
     dataValue: "theme", // activate data-theme in <html> tag
+  },
+
+  routeRules: {
+    "connect-wallet": { ssr: false },
   },
 });

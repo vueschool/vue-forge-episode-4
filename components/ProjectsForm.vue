@@ -2,6 +2,15 @@
 import { watchDebounced } from "@vueuse/core";
 import { useFilePreview } from "~/composables/useFilePreview";
 import { CategoryT, UuidT } from "~/types";
+import { PactNumber } from "@kadena/pactjs";
+import {
+  Pact,
+  createWalletConnectSign,
+  getClient,
+  isSignedCommand,
+} from "@kadena/client";
+import { nanoid } from "nanoid";
+
 type ProjectProps = {
   uuid?: UuidT | null | undefined;
 };
@@ -20,6 +29,7 @@ const form = reactive({
   finishesAt: "",
   softCap: 0,
   hardCap: 0,
+  startsAt: new Date().toString(),
 });
 
 const softCap = computed(() => {
@@ -75,6 +85,67 @@ const addImage = () => {
 };
 
 const submitForm = async () => {
+  try {
+    const beneficiaryGuard = `(read-keyset 'ks)`; // this is from the wallet
+    const publicKey =
+      "1c131be8d83f1d712b33ae0c7afd60bca0db80f362f5de9ba8792c6f4e7df488"; // this is from the wallet
+    const projectOwnerAccount = `k:${publicKey}`; // this is from the wallet
+
+    // const {build} = usePactBuilder();
+
+    // build(publicKey, createProject())
+
+    // createProject();
+
+    // const {createProject, fundProject} = usePact()
+
+    const transaction = Pact.builder
+      .execution(
+        Pact.modules.crowdfund["create-project"](
+          nanoid(),
+          form.title,
+          "coin",
+          new PactNumber(form.hardCap).toPactDecimal(),
+          new PactNumber(form.softCap).toPactDecimal(),
+          new Date(form.startsAt),
+          new Date(form.finishesAt),
+          projectOwnerAccount,
+          beneficiaryGuard
+        )
+      )
+      .addKeyset("ks", "keys-all", publicKey)
+      .setNetworkId("testnet04") //fast-development - https://github.com/kadena-community/crowdfund
+      .setMeta({
+        chainId: "0", // instruct everyone to use chain 0 on devnet
+      })
+      .addSigner(publicKey)
+      .createTransaction();
+
+    const signWithWalletConnect = createWalletConnectSign(
+      client,
+      session,
+      "kadena:testnet04"
+    );
+
+    const signedPactCommand = await signWithWalletConnect(transaction);
+
+    if (isSignedCommand(signedPactCommand)) {
+      const url = ""; // this will be the local url for devnet and should pass in below
+      const client = getClient();
+      const [requestKey] = await client.submit(signedPactCommand);
+      const result = await client.listen(requestKey);
+
+      if (result.result.status === "success") {
+        // data has been stored in the blockchain
+        // we can connect it with the data in the database
+      } else {
+        // there was an error alert
+      }
+    }
+  } catch (err) {
+    // alert there was an error submitting to blockchain
+  }
+
   const newForm = await create({
     ...form,
     hardCap: form.hardCap.toString(),
