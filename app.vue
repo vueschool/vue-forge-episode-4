@@ -8,5 +8,6 @@ colorMode.value = "cupcake";
   <div class="relative flex flex-col items-center justify-start">
     <NavBar />
     <NuxtPage />
+    <AppAlerts />
   </div>
 </template>

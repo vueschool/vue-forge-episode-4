@@ -12,13 +12,17 @@ const props = defineProps<{
     class="flex flex-col items-start justify-start col-span-1 space-y-4 shadow card glass"
   >
     <figure>
-      <img :src="project.image" :alt="project.title" class="w-[500px]" />
+      <img
+        :src="project.image"
+        :alt="project.title"
+        class="w-[500px] aspect-video object-cover"
+      />
     </figure>
     <div class="card-body">
       <h2 class="flex items-start justify-start capitalize card-title min-h-12">
         <span>{{ project.title }}</span>
       </h2>
-      <p class="h-36">
+      <p>
         {{ project.excerpt }}
       </p>
 

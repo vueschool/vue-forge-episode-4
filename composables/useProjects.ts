@@ -35,22 +35,24 @@ export const useProjects = () => {
     const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("uuid", uuid);
+      .eq("uuid", uuid)
+      .single();
     if (error || !data) {
       throw new Error(error?.message || "Error fetching project");
     }
-    project.value = data.at(0);
+    project.value = data;
   };
 
-  const create = async (project: Partial<ProjectT>) => {
+  const create = async (project: Partial<ProjectT>): Promise<ProjectT> => {
     const { data: newProject, error } = await supabase
       .from("projects")
-      .insert(project);
+      .insert(project as ProjectT)
+      .select("*")
+      .single();
 
+    console.log(newProject, error);
     if (error || !newProject)
       throw new Error(error?.message || "Error creating project");
-
-    projects.value.push(newProject);
 
     return newProject;
   };

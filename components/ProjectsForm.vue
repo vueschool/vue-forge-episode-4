@@ -75,15 +75,15 @@ const addImage = () => {
 };
 
 const submitForm = async () => {
-  const { data } = await create({
+  const newForm = await create({
     ...form,
     hardCap: form.hardCap.toString(),
     softCap: form.softCap.toString(),
     excerpt: `${form.description.substring(0, 130)} ...`,
+    image: form.image || "https://placehold.co/500x320",
   });
-
-  const router = useRouter();
-  await router.push(`/projects/${data.uuid}`);
+  useAlerts().success("Project created");
+  useRouter().push(`/projects/${newForm.uuid}`);
 };
 </script>
 

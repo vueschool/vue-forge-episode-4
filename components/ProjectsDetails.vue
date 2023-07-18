@@ -19,7 +19,11 @@ fetchOne({ uuid: props.uuid });
 
     <div class="grid grid-cols-12">
       <div class="col-span-8">
-        <img :src="project.image" alt="" class="object-cover w-full" />
+        <img
+          :src="project.image"
+          alt=""
+          class="object-cover w-full aspect-video"
+        />
       </div>
       <div class="h-full col-span-4">
         <div
@@ -34,7 +38,7 @@ fetchOne({ uuid: props.uuid });
           </div>
           <div class="flex flex-col items-start justify-start w-full">
             <span class="text-3xl text-primary">
-              <Money :amount="project.funded" />
+              <Money :amount="project.pledged" />
             </span>
             <span class="text-sm text-gray-500">
               pledged of <Money :amount="project.softCap" /> /
@@ -57,7 +61,7 @@ fetchOne({ uuid: props.uuid });
           </div>
 
           <div
-            class="absolute inset-x-0 bottom-0 flex flex-col items-center justify-center w-full px-8 space-y-4 text-center"
+            class="inset-x-0 bottom-0 flex flex-col items-center justify-center w-full px-8 space-y-4 text-center"
           >
             <button class="btn btn-primary">Fund this Project</button>
             <span class="text-xs text-gray-400">
