@@ -3,8 +3,6 @@ import { PairingTypes, SessionTypes } from "@walletconnect/types";
 import { WalletConnectModal } from "@walletconnect/modal";
 import { getSdkError } from "@walletconnect/utils";
 
-window.global ||= window;
-
 /**
  * Types
  */
@@ -19,6 +17,9 @@ const defaultState = {
 };
 
 export function useWalletConnect() {
+  if (!process.server) {
+    window.global ||= window;
+  }
   /**
    * walletConnectModal Config
    */
@@ -108,7 +109,7 @@ export function useWalletConnect() {
     }
   };
 
-  const _subscribeToEvents = async (_client) => {
+  const _subscribeToEvents = async (_client: Client) => {
     if (typeof _client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
@@ -135,7 +136,7 @@ export function useWalletConnect() {
     });
   };
 
-  const _checkPersistedState = async (_client) => {
+  const _checkPersistedState = async (_client: Client) => {
     if (typeof _client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }

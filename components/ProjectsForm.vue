@@ -89,10 +89,12 @@ console.log(client, session);
 const submitForm = async () => {
   try {
     const beneficiaryGuard = `(read-keyset 'ks)`; // this is from the wallet
-    const publicKey =
-      "1c131be8d83f1d712b33ae0c7afd60bca0db80f362f5de9ba8792c6f4e7df488"; // this is from the wallet
-    const projectOwnerAccount = `k:${publicKey}`; // this is from the wallet
+    const publicKey = session.value?.peer.publicKey;
+    const projectOwnerAccount = `k:${publicKey}`;
 
+    if (!publicKey) throw new Error("Public key required to build transaction");
+    if (!client.value)
+      throw new Error("wallet connect client required to build transaction");
     // const {build} = usePactBuilder();
 
     // build(publicKey, createProject())
@@ -124,8 +126,8 @@ const submitForm = async () => {
       .createTransaction();
 
     const signWithWalletConnect = createWalletConnectSign(
-      client,
-      session,
+      client.value,
+      session.value,
       "kadena:testnet04"
     );
 
@@ -138,13 +140,16 @@ const submitForm = async () => {
       const result = await client.listen(requestKey);
 
       if (result.result.status === "success") {
+        console.log("success", result);
         // data has been stored in the blockchain
         // we can connect it with the data in the database
       } else {
+        console.log("nope");
         // there was an error alert
       }
     }
   } catch (err) {
+    console.log(err);
     // alert there was an error submitting to blockchain
   }
 
