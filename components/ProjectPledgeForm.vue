@@ -3,7 +3,9 @@ const amount = ref("");
 function handlePledge() {
   if (!amount.value) return;
   // send pledge amount to blockchain
-  useAlerts().success("Thanks for pledging!");
+  useAlerts().success("This is a placeholder, right now nothing is happening", {
+    title: "Thanks for pledging!",
+  });
 }
 </script>
 <template>

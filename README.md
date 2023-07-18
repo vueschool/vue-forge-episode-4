@@ -1,63 +1,40 @@
-# Nuxt 3 Minimal Starter
+# How to Get Started
 
-Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+1. Ensure you have [docker installed](https://docs.docker.com/get-docker/) and running
+2. Clone the repo
 
-## Setup
-
-Make sure to install the dependencies:
-
-```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
+```
+git clone git@github.com:vueschool/forge-4-poc.git
 ```
 
-## Development Server
+3. Install the dependencies
 
-Start the development server on `http://localhost:3000`:
+```
+yarn
+```
 
-```bash
-# npm
-npm run dev
+4. Start the Supabase service
 
-# pnpm
-pnpm run dev
+```
+yarn supabase:start
+```
 
-# yarn
+5. The needed supabase environment variables will print after the service has started. Add them to your .env file (can use .env.example as a template). You can also retrieve these at any time by running the following:
+
+```
+npx supabase status
+```
+
+6. Migrate and seed your database with initial schema and values by running:
+
+```
+yarn db:reset
+```
+
+7. Start the dev server
+
+```
 yarn dev
 ```
 
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm run build
-
-# yarn
-yarn build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm run preview
-
-# yarn
-yarn preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+8. That's it! 🎉 You're ready to go.
