@@ -110,36 +110,6 @@ export interface Database {
           }
         ]
       }
-      users: {
-        Row: {
-          avatar: string
-          bio: string | null
-          email: string
-          firstName: string
-          lastName: string
-          username: string
-          uuid: string
-        }
-        Insert: {
-          avatar: string
-          bio?: string | null
-          email: string
-          firstName: string
-          lastName: string
-          username: string
-          uuid?: string
-        }
-        Update: {
-          avatar?: string
-          bio?: string | null
-          email?: string
-          firstName?: string
-          lastName?: string
-          username?: string
-          uuid?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never

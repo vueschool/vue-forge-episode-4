@@ -29,37 +29,20 @@ create table "public"."projects" (
 ALTER TABLE "public"."projects" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY view_projects_policy ON "public"."projects" FOR SELECT
   USING (true);
-CREATE POLICY create_project_policy ON "public"."projects" FOR INSERT
-  WITH CHECK (true);
 
-
-create table "public"."users" (
-    "uuid" uuid not null default gen_random_uuid(),
-    "firstName" character varying(255) not null,
-    "lastName" character varying(255) not null,
-    "username" character varying(255) not null,
-    "bio" text,
-    "email" character varying(255) not null,
-    "avatar" character varying(255) not null
-);
-
-
-ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
-CREATE POLICY view_users_policy ON "public"."users" FOR SELECT
-  USING (true);
-
+CREATE POLICY "create_project_policy"
+ON "public"."projects"
+FOR INSERT 
+TO authenticated 
+WITH CHECK (true);
 
 CREATE UNIQUE INDEX categories_pkey ON public.categories USING btree (uuid);
 
 CREATE UNIQUE INDEX projects_pkey ON public.projects USING btree (uuid);
 
-CREATE UNIQUE INDEX users_pkey ON public.users USING btree (uuid);
-
 alter table "public"."categories" add constraint "categories_pkey" PRIMARY KEY using index "categories_pkey";
 
 alter table "public"."projects" add constraint "projects_pkey" PRIMARY KEY using index "projects_pkey";
-
-alter table "public"."users" add constraint "users_pkey" PRIMARY KEY using index "users_pkey";
 
 alter table "public"."projects" add constraint "projects_categoryUuid_fkey" FOREIGN KEY ("categoryUuid") REFERENCES categories(uuid) not valid;
 
