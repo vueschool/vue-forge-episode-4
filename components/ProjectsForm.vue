@@ -83,7 +83,7 @@ const submitForm = async () => {
     image: form.image || "https://placehold.co/500x320",
   });
   useAlerts().success("Project created");
-  useRouter().push(`/projects/${newForm.uuid}`);
+  navigateTo(`/projects/${newForm.uuid}`);
 };
 </script>
 

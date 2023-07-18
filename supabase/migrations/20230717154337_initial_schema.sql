@@ -43,6 +43,7 @@ create table "public"."users" (
     "avatar" character varying(255) not null
 );
 
+
 ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY view_users_policy ON "public"."users" FOR SELECT
   USING (true);
