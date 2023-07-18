@@ -33,15 +33,15 @@ const props = defineProps<{
         </div>
 
         <div class="badge badge-accent badge-outline">
-          <span>Funded: </span>
-          <Money :amount="project.funded" short />
+          <span>Pledged: </span>
+          <Money :amount="project.pledged" short />
         </div>
       </div>
       <div class="w-full">
         <progress
           class="w-full progress progress-primary"
           :value="project.pledged"
-          max="100"
+          :max="Number(project.hardCap)"
         ></progress>
       </div>
 

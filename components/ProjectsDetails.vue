@@ -35,7 +35,7 @@ const showPledgeForm = ref(false);
             <progress
               class="w-full progress progress-primary"
               :value="project.pledged"
-              max="100"
+              :max="Number(project.hardCap)"
             ></progress>
           </div>
           <div class="flex flex-col items-start justify-start w-full">
