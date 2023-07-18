@@ -36,7 +36,13 @@ const { data: userData } = await useFetch("/api/auth/me");
             Create Your Project
           </nuxt-link>
         </div>
-        <NuxtLink v-if="!user" :to="{ name: 'login' }"> Login </NuxtLink>
+        <NuxtLink
+          class="btn btn-white btn-sm"
+          v-if="!user"
+          :to="{ name: 'login' }"
+        >
+          Login
+        </NuxtLink>
         <div class="dropdown dropdown-end" v-if="user">
           <div tabindex="0" class="btn btn-ghost btn-circle avatar">
             <div
