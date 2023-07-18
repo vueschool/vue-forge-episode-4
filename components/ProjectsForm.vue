@@ -84,6 +84,8 @@ const addImage = () => {
   }
 };
 
+const { client, session } = useWalletConnect();
+console.log(client, session);
 const submitForm = async () => {
   try {
     const beneficiaryGuard = `(read-keyset 'ks)`; // this is from the wallet

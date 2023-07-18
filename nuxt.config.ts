@@ -10,6 +10,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       WALLET_CONNECT_PROJECT_ID: "",
+      WALLET_CONNECT_RELAY_URL: "",
     },
   },
   colorMode: {
@@ -19,5 +20,11 @@ export default defineNuxtConfig({
 
   routeRules: {
     "connect-wallet": { ssr: false },
+  },
+
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => ["w3m-core-button"].includes(tag),
+    },
   },
 });
