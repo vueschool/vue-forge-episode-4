@@ -1,5 +1,7 @@
 <script setup>
-const { connect, session, disconnect } = useWalletConnect();
+import { useWallet } from '~/composables/useWallet'
+
+const { connect, disconnect, account } = useWallet();
 </script>
 <template>
   <div class="mt-24">
@@ -12,9 +14,11 @@ const { connect, session, disconnect } = useWalletConnect();
       >
       or connect your existing wallet if you already have one.
     </p>
-    {{ session }}
-    <button v-if="session" @click="disconnect">Disconnect</button>
+    <pre>
+	    {{ account }}
+    </pre>
+    <button v-if="account" @click="disconnect">Disconnect</button>
 
-    <button v-if="!session" @click="connect">Connect</button>
+    <button v-if="!account" @click="connect">Connect</button>
   </div>
 </template>

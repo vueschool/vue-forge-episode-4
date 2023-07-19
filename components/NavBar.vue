@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import Balance from '~/components/Balance.vue'
+import { useGetBalance } from '~/composables/useGetBalance'
+
 const { fetchAll: fetchCategories, list: categories } = useCategories();
 await fetchCategories();
 const { appName } = useAppConfig();
@@ -6,15 +9,16 @@ const { appName } = useAppConfig();
 const user = useSupabaseUser();
 
 const { data: userData } = await useFetch("/api/auth/me");
+
 </script>
 
 <template>
   <div class="fixed z-20 w-full bg-primary text-primary-content">
     <div class="flex items-center justify-between mx-auto navbar max-w-7xl">
       <div class="flex-1">
-        <nuxt-link to="/" class="text-xl normal-case btn btn-ghost">{{
-          appName
-        }}</nuxt-link>
+        <nuxt-link to="/" class="text-xl normal-case btn btn-ghost">
+	        {{appName }}
+        </nuxt-link>
       </div>
       <div class="flex-none">
         <ul class="px-1 menu menu-horizontal">
@@ -64,6 +68,9 @@ const { data: userData } = await useFetch("/api/auth/me");
             <li><NuxtLink :to="{ name: 'logout' }">Logout</NuxtLink></li>
           </ul>
         </div>
+	      <ClientOnly fallback-tag="span" fallback="Loading comments...">
+		      <Balance />
+	      </ClientOnly>
       </div>
     </div>
   </div>
