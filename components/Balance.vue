@@ -1,26 +1,16 @@
 <script setup lang="ts">
-import { useGetBalance } from '~/composables/useGetBalance'
-import { useWallet } from '~/composables/useWallet'
+const{ balance, getBalance, all, initialized, initialize, connect } = useWallet()
 
-const useWalletInstance = useWallet()
-const {balance} = useWalletInstance
 // {initialized, connect, account, getBalance, balance }
-
+watch(balance, (newBalance) => {
+	console.log(newBalance)
+})
 console.log(balance)
 
 onMounted(async () => {
-	// await connect()
+	await getBalance()
 	
-	await useWalletInstance.getBalance()
-	
-	
-	// const response = await kadena.request({
-	// 	method: 'kda_requestAccount',
-	// 	networkId: NETWORKID,
-	// });
-	//
-	// await getBalance(response.wallet.account)
-	console.log(useWalletInstance.balance.value)
+	console.log(balance.value)
 })
 
 </script>
@@ -28,7 +18,7 @@ onMounted(async () => {
 <template>
 	<div class="form-control">
 		<span class="btn btn-sm bg-opacity-90">
-	      $KDA {{ useWalletInstance.balance }}
+	      $KDA {{ balance }}
       </span>
 	</div>
 </template>

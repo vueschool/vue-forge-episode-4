@@ -160,7 +160,7 @@ const submitForm = async () => {
     // createProject();
 
     // const {createProject, fundProject} = usePact()
-
+		const { chain, networkId } = useWallet()
     const transaction = Pact.builder
       .execution(
         Pact.modules.crowdfund["create-project"](
@@ -176,9 +176,9 @@ const submitForm = async () => {
         )
       )
       .addKeyset("ks", "keys-all", publicKey)
-      .setNetworkId("testnet04") //fast-development - https://github.com/kadena-community/crowdfund
+      .setNetworkId(networkId.value) //fast-development - https://github.com/kadena-community/crowdfund
       .setMeta({
-        chainId: "0", // instruct everyone to use chain 0 on devnet
+        chainId: chain.value, // instruct everyone to use chain 0 on devnet
       })
       .addSigner(publicKey)
       .createTransaction();
@@ -186,7 +186,7 @@ const submitForm = async () => {
     const signWithWalletConnect = createWalletConnectSign(
 	    client.value,
       session.value,
-      "kadena:testnet04"
+      `kadena:${networkId.value}`,
     );
     const signedPactCommand = await signWithWalletConnect(transaction);
 		console.log('signedPactCommand', signedPactCommand)
