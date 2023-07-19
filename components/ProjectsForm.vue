@@ -58,8 +58,48 @@ const category = computed(() => {
 });
 
 const finishesAt = computed(() => {
-  return form.finishesAt ? new Date(form?.finishesAt) : Date.now();
+  return form.finishesAt ? new Date(form?.finishesAt) : null;
 });
+
+const startsAt = computed(() => {
+  return form.startsAt ? new Date(form?.startsAt) : null;
+});
+
+const isFinishDateBeforeStartDate = computed(() => {
+	return (
+		finishesAt.value &&
+		startsAt.value &&
+		finishesAt.value.getTime() < startsAt.value.getTime()
+	)
+})
+
+const errors = reactive<Record<string, string | null>>({
+	title: null,
+	description: null,
+	image: null,
+	categoryUuid: null,
+	finishesAt: null,
+	softCap: null,
+	hardCap: null,
+	startsAt: null,
+});
+
+
+const validateFinishDateIsAfterStartDate = async () => {
+	if (isFinishDateBeforeStartDate.value) {
+		errors.finishesAt = "Finish date must be after start date"
+	} else {
+		errors.finishesAt = null
+	}
+}
+
+
+watchDebounced(
+	[startsAt, finishesAt],
+	validateFinishDateIsAfterStartDate,
+	{ debounce: 500, maxWait: 1000 }
+);
+
 
 const pledged = computed(() => {
   return Math.floor(Math.random() * 100);
@@ -84,14 +124,32 @@ const addImage = () => {
   }
 };
 
-const { client, session } = useWalletConnect();
-console.log(client, session);
+const { client, session, connect, pairings } = useWalletConnect();
+
+const hasErrors = computed( () => Object.keys(errors).some((key) => errors[key]))
+
+const validate = async () => {
+	await validateFinishDateIsAfterStartDate()
+	if (hasErrors.value) throw new Error("Form has errors")
+}
+
+
+const onBeforeSubmit = async () => {
+	try {
+		await validate()
+		submitForm()
+	} catch(error) { console.log(error) }
+	
+
+}
+
 const submitForm = async () => {
   try {
+	  await connect()
     const beneficiaryGuard = `(read-keyset 'ks)`; // this is from the wallet
     const publicKey = session.value?.peer.publicKey;
     const projectOwnerAccount = `k:${publicKey}`;
-
+		console.log('here we go', pairings)
     if (!publicKey) throw new Error("Public key required to build transaction");
     if (!client.value)
       throw new Error("wallet connect client required to build transaction");
@@ -124,15 +182,14 @@ const submitForm = async () => {
       })
       .addSigner(publicKey)
       .createTransaction();
-
+		console.log('transaction', transaction)
     const signWithWalletConnect = createWalletConnectSign(
-      client.value,
+	    client.value,
       session.value,
       "kadena:testnet04"
     );
-
     const signedPactCommand = await signWithWalletConnect(transaction);
-
+		console.log('signedPactCommand', signedPactCommand)
     if (isSignedCommand(signedPactCommand)) {
       const url = ""; // this will be the local url for devnet and should pass in below
       const client = getClient();
@@ -172,7 +229,7 @@ const submitForm = async () => {
     </div>
 
     <div class="grid grid-cols-12">
-      <form @submit.prevent="submitForm" class="w-full col-span-8">
+      <form @submit.prevent="onBeforeSubmit" class="w-full col-span-8">
         <div
           class="relative flex flex-col items-center justify-start w-full h-full px-8 space-y-4"
         >
@@ -330,19 +387,44 @@ const submitForm = async () => {
 
           <div class="w-full max-w-full form-control">
             <label class="label">
-              <span class="label-text"
-                >Which date do you want to set as a timeline?</span
-              >
+              <span class="label-text"  :class="{'text-red-600 font-bold' :  errors.startsAt}">
+	              When should your project funding start?
+              </span>
+            </label>
+            <input
+              v-model="form.startsAt"
+              type="date"
+              class="w-full input input-bordered"
+              :class="{ 'input-error text-red-600': errors.startsAt }"
+            />
+            <label class="label">
+	            <span v-if="errors.startsAt" class="text-red-600 label-text-alt">
+			          {{ errors.startsAt }}
+		            </span>
+              <span v-else class="text-gray-400 label-text-alt">
+                This is the date that your project will start receiving funds.
+              </span>
+            </label>
+          </div>
+	        
+	        <div class="w-full max-w-full form-control">
+            <label class="label">
+              <span class="label-text"  :class="{'text-red-600 font-bold' :  errors.finishesAt}">
+	              When should your project funding end?
+              </span>
             </label>
             <input
               v-model="form.finishesAt"
               type="date"
               class="w-full input input-bordered"
+              :class="{ 'input-error text-red-600': errors.finishesAt }"
             />
             <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                Choose wisely the date that you want to set as a timeline for
-                your project.
+	             <span v-if="errors.finishesAt" class="text-red-600 label-text-alt">
+			          {{ errors.finishesAt }}
+		            </span>
+              <span v-else class="text-gray-400 label-text-alt">
+                This is the date that your project will stop receiving funds.
               </span>
             </label>
           </div>
@@ -362,7 +444,8 @@ const submitForm = async () => {
                 backers,
                 pledged,
                 funded: funded.toString(),
-                finishesAt: finishesAt.toString(),
+                finishesAt: finishesAt? finishesAt.toString() : new Date().toString(),
+                startsAt: startsAt? startsAt.toString() : new Date().toString(),
                 title: form.title || 'Your title here',
                 image: form.image || 'https://placehold.co/500x320',
                 excerpt: form.description
