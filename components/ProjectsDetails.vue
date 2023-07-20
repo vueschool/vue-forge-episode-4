@@ -6,7 +6,8 @@ type ProjectProps = {
 const props = defineProps<ProjectProps>();
 
 const { item: project, fetchOne } = useProjects();
-fetchOne({ uuid: props.uuid });
+
+await useAsyncData("fetch-project", () => fetchOne({ uuid: props.uuid }));
 
 const showPledgeForm = ref(false);
 </script>
@@ -40,11 +41,19 @@ const showPledgeForm = ref(false);
           </div>
           <div class="flex flex-col items-start justify-start w-full">
             <span class="text-3xl text-primary">
-              <Money :amount="project.pledged" />
+              <ClientOnly>
+                <Money :amount="project.pledged" />
+              </ClientOnly>
             </span>
             <span class="text-sm text-gray-500">
-              pledged of <Money :amount="project.softCap" /> /
-              <Money :amount="project.hardCap" />
+              pledged of
+              <ClientOnly>
+                <Money :amount="project.softCap" />
+              </ClientOnly>
+              /
+              <ClientOnly>
+                <Money :amount="project.hardCap" />
+              </ClientOnly>
             </span>
           </div>
 
@@ -57,7 +66,9 @@ const showPledgeForm = ref(false);
 
           <div class="flex flex-col items-start justify-start w-full">
             <span class="text-xl text-secondary">
-              <Counter :date="project.finishesAt" />
+              <ClientOnly>
+                <TimeAgo :date="project.finishesAt" />
+              </ClientOnly>
             </span>
             <span class="text-sm text-gray-500 uppercase"> Time to go </span>
           </div>
@@ -71,7 +82,9 @@ const showPledgeForm = ref(false);
               <span class="text-xs text-gray-400">
                 All or nothing, this project will only be funded if it reaches
                 at least the soft cap by
-                <Date :date="project.finishesAt" />
+                <ClientOnly>
+                  <Date :date="project.finishesAt" />
+                </ClientOnly>
               </span>
             </div>
             <ProjectPledgeForm v-if="showPledgeForm" />

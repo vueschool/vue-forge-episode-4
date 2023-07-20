@@ -3,8 +3,14 @@ import Pagination from "~/components/Pagination.vue";
 import ProjectCard from "~/components/ProjectCard.vue";
 import { useProjects } from "~/composables/useProjects";
 
-const { pagination, fetchAll: fetchProjects, list: projects } = useProjects();
-fetchProjects({ page: 1 });
+const { pagination, fetchAll: fetchProjects, list } = useProjects();
+const { data: projects } = await useAsyncData(
+  "fetch-projects-list",
+  async () => {
+    await fetchProjects({ page: 1 });
+    return list.value;
+  }
+);
 </script>
 
 <template>
@@ -13,7 +19,7 @@ fetchProjects({ page: 1 });
       <li v-for="project in projects" :key="project.uuid">
         <ProjectCard
           :project="project"
-          :category-name="project.categories?.name"
+          :category-name="project.category?.name"
         />
       </li>
     </ul>

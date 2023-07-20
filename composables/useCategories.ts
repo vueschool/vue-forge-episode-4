@@ -32,7 +32,6 @@ export const useCategories = () => {
   };
 
   const fetchOne = async ({ uuid }: { uuid: UuidT }) => {
-    console.log(uuid);
     const { data, error } = await supabase
       .from("categories")
       .select("*, projects(*)")
