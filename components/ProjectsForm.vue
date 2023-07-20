@@ -22,8 +22,23 @@ const validationSchema = toTypedSchema(
       .number()
       .min(10000, { message: "Too low" })
       .max(100000, { message: "Too high" }),
-    startDate: zod.date().min(new Date()),
-    endDate: zod.date().min(new Date(new Date().getMonth() + 6)),
+    startsAt: zod.custom<`${string}`>(
+      (val) => {
+        if (typeof val !== "string") return false;
+        const isInFuture = new Date(val) > new Date();
+        return isInFuture;
+      },
+      { message: "Start date must be in the future" }
+    ),
+    finishesAt: zod.custom<`${string}`>(
+      (val) => {
+        if (typeof val !== "string") return false;
+        const isInFuture = new Date(val) > new Date();
+        const isLessThans6MonthsOut = generate6MonthsAwayDate() > new Date(val);
+        return isInFuture && isLessThans6MonthsOut;
+      },
+      { message: "End date must be no more than 6 months away" }
+    ),
   })
 );
 
@@ -44,9 +59,13 @@ const form = reactive({
   categoryUuid: "",
   softCap: 10_000,
   hardCap: 25_000,
-  finishesAt: new Date().toString(),
-  startsAt: new Date().toString(),
+  startsAt: useDateFormat(new Date(), "YYYY-MM-DD").value,
+  finishesAt: useDateFormat(generate6MonthsAwayDate(), "YYYY-MM-DD").value,
 });
+
+function generate6MonthsAwayDate() {
+  return new Date(new Date().setMonth(new Date().getMonth() + 6));
+}
 
 const softCap = computed(() => {
   return parseInt(`${form.softCap}`);
@@ -234,54 +253,23 @@ const submitForm = async () => {
             </template>
           </FormField>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">
-                When should your project funding start?
-              </span>
-              <span class="label-text-alt">
-                <ErrorMessage name="startsAt" />
-              </span>
-            </label>
-            <Field
-              name="startsAt"
-              v-model="form.startsAt"
-              type="date"
-              class="w-full input input-bordered"
-            />
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                This is the date that your project will start receiving funds.
-              </span>
-            </label>
-          </div>
+          <FormField
+            label="When should your project funding start?"
+            name="startsAt"
+            type="date"
+            v-model="form.startsAt"
+            hint="This is the date that your project will open to start receiving funds."
+          />
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">
-                When should your project funding end?
-              </span>
-              <span class="label-text-alt">
-                <ErrorMessage name="finishesAt" />
-              </span>
-            </label>
-            <Field
-              name="finishesAt"
-              v-model="form.finishesAt"
-              type="date"
-              class="w-full input input-bordered"
-            />
+          <FormField
+            label="When should your project funding end?"
+            name="finishesAt"
+            type="date"
+            v-model="form.finishesAt"
+            hint="This is the date that your project will stop receiving funds."
+          />
 
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                This is the date that your project will stop receiving funds.
-              </span>
-            </label>
-          </div>
-
-          <div class="w-full max-w-full form-control">
-            <button class="btn btn-primary">Publish your project</button>
-          </div>
+          <button class="w-full btn btn-primary">Publish your project</button>
         </div>
       </Form>
       <div class="h-full col-span-4">
