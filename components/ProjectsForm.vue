@@ -180,10 +180,20 @@ const submitForm = async () => {
 
           <FormField
             label="Which category does your project fit in?"
+            as="select"
             name="categoryUuid"
             v-model="form.categoryUuid"
             hint="Selecting a fitting category ensures the right people find your project."
-          />
+          >
+            <option disabled selected :value="null">Pick one</option>
+            <option
+              v-for="category in categories"
+              :key="category.uuid"
+              :value="category.uuid"
+            >
+              {{ category.name }}
+            </option>
+          </FormField>
 
           <FormField
             label="What is the soft cap of your project?"

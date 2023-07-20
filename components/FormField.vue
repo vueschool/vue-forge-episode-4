@@ -1,18 +1,14 @@
 <script setup lang="ts">
-const props = withDefaults(
-  defineProps<{
-    label: string;
-    name: string;
-    modelValue: any;
-    as?: string;
-    hint?: string;
-    id?: string;
-    class?: string;
-  }>(),
-  {
-    class: "input input-bordered",
-  }
-);
+const props = defineProps<{
+  label: string;
+  name: string;
+  modelValue: any;
+  as?: string;
+  hint?: string;
+  id?: string;
+  class?: string;
+}>();
+
 const emit = defineEmits<{
   (e: "update:modelValue", payload: typeof props.modelValue): void;
 }>();
@@ -25,7 +21,14 @@ watch(
   (val) => (value.value = val)
 );
 
+// handle input attributes
 const id = computed(() => props.id || props.name);
+const classes = computed(() => {
+  if (props.class) return props.class;
+  if (props.as === "select") return "select select-bordered";
+  if (props.as === "textarea") return "textarea textarea-bordered";
+  return "input input-bordered";
+});
 </script>
 
 <script lang="ts">
@@ -53,13 +56,25 @@ export default {
 
     <slot name="input">
       <Field
+        v-if="$slots.default"
         :id="id"
         v-model="value"
         :name="name"
         v-bind="$attrs"
         :as="as"
         class="w-full"
-        :class="class"
+        :class="classes"
+        ><slot></slot
+      ></Field>
+      <Field
+        v-else
+        :id="id"
+        v-model="value"
+        :name="name"
+        v-bind="$attrs"
+        :as="as"
+        class="w-full"
+        :class="classes"
       />
     </slot>
 
