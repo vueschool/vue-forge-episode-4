@@ -7,7 +7,7 @@ const props = withDefaults(
     as?: string;
     hint?: string;
     id?: string;
-    class: string;
+    class?: string;
   }>(),
   {
     class: "input input-bordered",
