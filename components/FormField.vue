@@ -26,7 +26,7 @@ const id = computed(() => props.id || props.name);
 const classes = computed(() => {
   if (props.class) return props.class;
   if (props.as === "select") return "select select-bordered";
-  if (props.as === "textarea") return "textarea textarea-bordered";
+  if (props.as === "textarea") return "textarea textarea-bordered h-64";
   return "input input-bordered";
 });
 </script>

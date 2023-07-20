@@ -159,6 +159,7 @@ const submitForm = async () => {
             label="What is your project about?"
             name="description"
             v-model="form.description"
+            as="textarea"
             hint="Describe with full detail your project so that people
                 understand exactly what it is about."
           />
