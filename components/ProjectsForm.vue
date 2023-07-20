@@ -17,9 +17,10 @@ const form = reactive({
   description: "",
   image: "",
   categoryUuid: "",
-  finishesAt: "",
   softCap: 0,
   hardCap: 0,
+  finishesAt: new Date().toString(),
+  startsAt: new Date().toString(),
 });
 
 const softCap = computed(() => {
@@ -45,10 +46,6 @@ const category = computed(() => {
   return categories.value.find(
     (category) => category.uuid === form.categoryUuid
   );
-});
-
-const finishesAt = computed(() => {
-  return form.finishesAt ? new Date(form?.finishesAt) : Date.now();
 });
 
 const pledged = computed(() => {
@@ -252,9 +249,27 @@ const submitForm = async () => {
 
           <div class="w-full max-w-full form-control">
             <label class="label">
-              <span class="label-text"
-                >Which date do you want to set as a timeline?</span
-              >
+              <span class="label-text">
+                When should your project funding start?
+              </span>
+            </label>
+            <input
+              v-model="form.startsAt"
+              type="date"
+              class="w-full input input-bordered"
+            />
+            <label class="label">
+              <span class="text-gray-400 label-text-alt">
+                This is the date that your project will start receiving funds.
+              </span>
+            </label>
+          </div>
+
+          <div class="w-full max-w-full form-control">
+            <label class="label">
+              <span class="label-text">
+                When should your project funding end?
+              </span>
             </label>
             <input
               v-model="form.finishesAt"
@@ -263,8 +278,7 @@ const submitForm = async () => {
             />
             <label class="label">
               <span class="text-gray-400 label-text-alt">
-                Choose wisely the date that you want to set as a timeline for
-                your project.
+                This is the date that your project will stop receiving funds.
               </span>
             </label>
           </div>
@@ -284,7 +298,8 @@ const submitForm = async () => {
                 backers,
                 pledged,
                 funded: funded.toString(),
-                finishesAt: finishesAt.toString(),
+                finishesAt: form.finishesAt.toString(),
+                startsAt: form.startsAt.toString(),
                 title: form.title || 'Your title here',
                 image: form.image || 'https://placehold.co/500x320',
                 excerpt: form.description

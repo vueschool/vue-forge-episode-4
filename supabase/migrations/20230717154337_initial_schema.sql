@@ -21,6 +21,7 @@ create table "public"."projects" (
     "funded" character varying(255) not null default '0',
     "softCap" character varying(255) not null,
     "hardCap" character varying(255) not null,
+    "startsAt" timestamp without time zone not null,
     "finishesAt" timestamp without time zone not null,
     "createdAt" timestamp without time zone not null default now(),
     "lastUpdatedAt" timestamp without time zone not null default now()
@@ -32,8 +33,8 @@ CREATE POLICY view_projects_policy ON "public"."projects" FOR SELECT
 
 CREATE POLICY "create_project_policy"
 ON "public"."projects"
-FOR INSERT 
-TO authenticated 
+FOR INSERT
+TO authenticated
 WITH CHECK (true);
 
 CREATE UNIQUE INDEX categories_pkey ON public.categories USING btree (uuid);

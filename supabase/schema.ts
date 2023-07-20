@@ -66,6 +66,7 @@ export interface Database {
           lastUpdatedAt: string
           pledged: number
           softCap: string
+          startsAt: string
           title: string
           uuid: string
         }
@@ -82,6 +83,7 @@ export interface Database {
           lastUpdatedAt?: string
           pledged?: number
           softCap: string
+          startsAt: string
           title: string
           uuid?: string
         }
@@ -98,6 +100,7 @@ export interface Database {
           lastUpdatedAt?: string
           pledged?: number
           softCap?: string
+          startsAt?: string
           title?: string
           uuid?: string
         }
