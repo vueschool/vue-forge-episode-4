@@ -3,14 +3,8 @@ import Pagination from "~/components/Pagination.vue";
 import ProjectCard from "~/components/ProjectCard.vue";
 import { useProjects } from "~/composables/useProjects";
 
-const { pagination, fetchAll: fetchProjects, list } = useProjects();
-const { data: projects } = await useAsyncData(
-  "fetch-projects-list",
-  async () => {
-    await fetchProjects({ page: 1 });
-    return list.value;
-  }
-);
+const { pagination, fetchAll: fetchProjects, list: projects } = useProjects();
+fetchProjects({ page: 1 });
 </script>
 
 <template>

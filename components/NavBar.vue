@@ -4,8 +4,6 @@ await fetchCategories();
 const { appName } = useAppConfig();
 
 const user = useSupabaseUser();
-
-const { data: userData } = await useFetch("/api/auth/me");
 </script>
 
 <template>
