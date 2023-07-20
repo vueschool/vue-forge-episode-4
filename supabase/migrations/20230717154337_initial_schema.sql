@@ -49,4 +49,4 @@ alter table "public"."projects" add constraint "projects_categoryUuid_fkey" FORE
 
 alter table "public"."projects" validate constraint "projects_categoryUuid_fkey";
 
-
+CREATE POLICY "logged in users can upload project images 1iiiika_0" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'projects');
