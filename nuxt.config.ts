@@ -7,9 +7,17 @@ export default defineNuxtConfig({
     "@nuxtjs/supabase",
     "@vueuse/nuxt",
     "@vee-validate/nuxt",
+    "nuxt-proxy",
   ],
   colorMode: {
     preference: "cupcake", // default theme
     dataValue: "theme", // activate data-theme in <html> tag
+  },
+  proxy: {
+    options: {
+      target: "http://localhost:55321",
+      changeOrigin: true,
+      pathFilter: ["/rest/**", "/auth/**"],
+    },
   },
 });

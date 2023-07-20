@@ -1,16 +1,15 @@
 <script setup lang="ts">
 type DateProps = {
-	date?: string | number | Date
-}
+  date?: string | number | Date;
+};
 
-const props = defineProps<DateProps>()
+const props = defineProps<DateProps>();
 
-const date = computed(() => new Date(props.date))
-
+const date = computed(() => new Date(props.date || ""));
 </script>
 
 <template>
-	<span>
-		{{ date.toLocaleString() }}
-	</span>
+  <span v-if="props.date">
+    {{ date.toLocaleString() }}
+  </span>
 </template>

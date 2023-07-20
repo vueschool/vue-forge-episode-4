@@ -50,7 +50,6 @@ export const useProjects = () => {
       .select("*")
       .single();
 
-    console.log(newProject, error);
     if (error || !newProject)
       throw new Error(error?.message || "Error creating project");
 

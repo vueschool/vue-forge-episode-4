@@ -87,8 +87,6 @@ watchDebounced(
   { debounce: 500, maxWait: 1000 }
 );
 
-const fileInput = ref(null);
-
 const category = computed(() => {
   return categories.value.find(
     (category) => category.uuid === form.categoryUuid
@@ -107,12 +105,16 @@ const funded = computed(() => {
   return Math.floor(Math.random() * 10000);
 });
 
+const fileInput = ref<HTMLInputElement | null>(null);
 const addImage = () => {
+  if (!fileInput.value) return;
   const files = fileInput.value.files;
   if (files && files[0]) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      form.image = e.target.result;
+      if (e.target?.result) {
+        form.image = e.target.result as string;
+      }
     };
     reader.readAsDataURL(files[0]);
   }
