@@ -124,53 +124,23 @@ const submitForm = async () => {
         <div
           class="relative flex flex-col items-center justify-start w-full h-full px-8 space-y-4"
         >
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">What is your projects name?</span>
-              <span class="label-text-alt text-error">
-                <ErrorMessage name="title" />
-              </span>
-            </label>
+          <FormField
+            label="What is your projects name?"
+            name="title"
+            v-model="form.title"
+            hint="Use a very handy title that people could identify your
+                project"
+          />
 
-            <Field
-              v-model="form.title"
-              name="title"
-              type="text"
-              placeholder="Your title here"
-              class="w-full input input-bordered"
-            />
+          <FormField
+            label="What is your project about?"
+            name="description"
+            v-model="form.description"
+            hint="Describe with full detail your project so that people
+                understand exactly what it is about."
+          />
 
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Use a very handy title that people could identify your
-                project</span
-              >
-            </label>
-          </div>
-
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">What is your project about?</span>
-              <span class="label-text-alt text-error">
-                <ErrorMessage name="description" />
-              </span>
-            </label>
-            <Field
-              as="textarea"
-              name="description"
-              v-model="form.description"
-              class="w-full h-56 textarea textarea-bordered"
-              placeholder="Description"
-            ></Field>
-            <ErrorMessage name="description" />
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Describe with full detail your project so that people
-                understand exactly what it is about.</span
-              >
-            </label>
-          </div>
-
+          <!-- TODO: take care of image upload -->
           <div class="w-full max-w-full form-control">
             <label class="label">
               <span class="label-text">Upload an image</span>
@@ -189,125 +159,80 @@ const submitForm = async () => {
             </label>
           </div>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >Which category does your project fit in?</span
-              >
-              <span class="label-text-alt text-error">
-                <ErrorMessage name="categoryUuid" />
-              </span>
-            </label>
-            <Field
-              as="select"
-              name="categoryUuid"
-              v-model="form.categoryUuid"
-              class="select select-bordered"
-            >
-              <option disabled selected :value="null">Pick one</option>
-              <option
-                v-for="category in categories"
-                :key="category.uuid"
-                :value="category.uuid"
-              >
-                {{ category.name }}
-              </option>
-            </Field>
+          <FormField
+            label="Which category does your project fit in?"
+            name="categoryUuid"
+            v-model="form.categoryUuid"
+            hint="Selecting a fitting category ensures the right people find your project."
+          />
 
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Select the category that your project best fits in.</span
-              >
-            </label>
-          </div>
+          <FormField
+            label="What is the soft cap of your project?"
+            name="softCap"
+            type="range"
+            min="0"
+            max="100000"
+            class="range"
+            step="10000"
+            v-model.number="form.softCap"
+            hint="Soft cap is the minimum amount of money that you need to raise
+                in order to start your project."
+          >
+            <template #label-text-alt>
+              <Money :amount="form.softCap" />
+            </template>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >What is the soft cap of your project?</span
-              >
-              <span class="label-text-alt">
-                <Money :amount="form.softCap" />
-                <span class="text-error">
-                  <ErrorMessage name="softCap" />
-                </span>
-              </span>
-            </label>
+            <template #after-input>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span><Money :amount="10000" /></span>
+                <span><Money :amount="25000" /></span>
+                <span><Money :amount="50000" /></span>
+                <span><Money :amount="75000" /></span>
+                <span><Money :amount="100000" /></span>
+              </div>
+            </template>
+          </FormField>
 
-            <Field
-              name="softCap"
-              type="range"
-              min="0"
-              max="100000"
-              class="range"
-              step="10000"
-              v-model.number="form.softCap"
-            />
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span><Money :amount="10000" /></span>
-              <span><Money :amount="25000" /></span>
-              <span><Money :amount="50000" /></span>
-              <span><Money :amount="75000" /></span>
-              <span><Money :amount="100000" /></span>
-            </div>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                Soft cap is the minimum amount of money that you need to raise
-                in order to start your project.
-              </span>
-            </label>
-          </div>
+          <FormField
+            label="What is the hard cap of your project?"
+            name="hardCap"
+            type="range"
+            min="0"
+            max="100000"
+            class="range"
+            step="10000"
+            v-model.number="form.hardCap"
+            hint="Hard cap is the maximum amount of money that you need to raise
+                in order to start your project."
+          >
+            <template #label-text-alt>
+              <Money :amount="form.hardCap" />
+            </template>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >What is the hard cap of your project?</span
-              >
-              <span class="label-text-alt">
-                <Money :amount="hardCap" />
-                <span class="text-error">
-                  <ErrorMessage name="hardCap" />
-                </span>
-              </span>
-            </label>
-
-            <Field
-              type="range"
-              name="hardCap"
-              min="0"
-              max="100000"
-              v-model.number="form.hardCap"
-              class="range"
-              step="10000"
-            />
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span><Money :amount="10000" /></span>
-              <span><Money :amount="25000" /></span>
-              <span><Money :amount="50000" /></span>
-              <span><Money :amount="75000" /></span>
-              <span><Money :amount="100000" /></span>
-            </div>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                Hard cap is the maximum amount of money that you need to raise
-                in order to start your project.
-              </span>
-            </label>
-          </div>
+            <template #after-input>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span><Money :amount="10000" /></span>
+                <span><Money :amount="25000" /></span>
+                <span><Money :amount="50000" /></span>
+                <span><Money :amount="75000" /></span>
+                <span><Money :amount="100000" /></span>
+              </div>
+            </template>
+          </FormField>
 
           <div class="w-full max-w-full form-control">
             <label class="label">
