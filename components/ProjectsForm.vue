@@ -10,8 +10,6 @@ type ProjectProps = {
 };
 const props = defineProps<ProjectProps>();
 
-const { create } = useProjects();
-
 // Validation
 const validationSchema = toTypedSchema(
   zod.object({
@@ -32,26 +30,24 @@ const validationSchema = toTypedSchema(
     startsAt: zod.custom<`${string}`>(
       (val) => {
         if (typeof val !== "string") return false;
-        const isInFuture = new Date(val) > new Date();
-        return isInFuture;
+        const selectedDate = new Date(`${val} 00:00:00`);
+        const isInFuture = selectedDate > new Date();
+        const isToday = selectedDate.getDate() === new Date().getDate();
+        return isInFuture || isToday;
       },
-      { message: "Start date must be in the future" }
+      { message: "Start date must be today or later" }
     ),
     finishesAt: zod.custom<`${string}`>(
       (val) => {
         if (typeof val !== "string") return false;
         const isInFuture = new Date(val) > new Date();
-        const isLessThans6MonthsOut = generate6MonthsAwayDate() > new Date(val);
+        const isLessThans6MonthsOut = getDateXMonthsFromNow(6) > new Date(val);
         return isInFuture && isLessThans6MonthsOut;
       },
       { message: "End date must be no more than 6 months away" }
     ),
   })
 );
-
-// Get categories
-const { list: categories, fetchAll } = useCategories();
-fetchAll();
 
 // Set initial form values
 // and keep up with form state
@@ -63,66 +59,36 @@ const form = reactive({
   softCap: 10_000,
   hardCap: 25_000,
   startsAt: useDateFormat(new Date(), "YYYY-MM-DD").value,
-  finishesAt: useDateFormat(generate6MonthsAwayDate(), "YYYY-MM-DD").value,
+  finishesAt: useDateFormat(getDateXMonthsFromNow(6), "YYYY-MM-DD").value,
 });
 
-function generate6MonthsAwayDate() {
-  return new Date(new Date().setMonth(new Date().getMonth() + 6));
-}
-
-const softCap = computed(() => {
-  return parseInt(`${form.softCap}`);
+// keep hardcap always above softcap and vice versa
+watch([() => form.softCap], ([soft]) => {
+  if (soft > form.hardCap) {
+    const plus500 = soft + 5000;
+    form.hardCap = plus500 < 10000 ? plus500 : soft;
+  }
 });
-const hardCap = computed(() => {
-  return parseInt(`${form.hardCap}`);
+watch([() => form.hardCap], ([hard]) => {
+  if (form.softCap > hard) {
+    const minus500 = hard - 5000;
+    form.softCap = minus500 < 0 ? hard : minus500;
+  }
 });
 
-watchDebounced(
-  [softCap, hardCap],
-  ([soft, hard]) => {
-    if (soft > hard) {
-      form.hardCap = hard !== 10000 ? soft + 10000 : soft;
-    }
-  },
-  { debounce: 500, maxWait: 1000 }
-);
-
+// Get categories for dropdown
+const { list: categories, fetchAll } = useCategories();
+fetchAll();
 const category = computed(() => {
   return categories.value.find(
     (category) => category.uuid === form.categoryUuid
   );
 });
 
-const pledged = computed(() => {
-  return Math.floor(Math.random() * 100);
-});
-
-const backers = computed(() => {
-  return Math.floor(Math.random() * 1000);
-});
-
-const funded = computed(() => {
-  return Math.floor(Math.random() * 10000);
-});
-
-const fileInput = ref<HTMLInputElement | null>(null);
-const addImage = () => {
-  if (!fileInput.value) return;
-  const files = fileInput.value.files;
-  if (files && files[0]) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        form.image = e.target.result as string;
-      }
-    };
-    reader.readAsDataURL(files[0]);
-  }
-};
-
 // handle form submit
+const { create: createProjectInDB } = useProjects();
 const submitForm = async () => {
-  const newForm = await create({
+  const newForm = await createProjectInDB({
     ...form,
     hardCap: form.hardCap.toString(),
     softCap: form.softCap.toString(),
@@ -166,24 +132,10 @@ const submitForm = async () => {
                 understand exactly what it is about."
           />
 
-          <!-- TODO: take care of image upload -->
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">Upload an image</span>
-            </label>
-            <input
-              @change="addImage"
-              ref="fileInput"
-              type="file"
-              class="w-full file-input file-input-bordered"
-            />
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >If you use nice a image it's more likely that backers will
-                notice your project.</span
-              >
-            </label>
-          </div>
+          <AppFileUpload
+            bucket="projects"
+            @file:uploaded="form.image = $event"
+          />
 
           <FormField
             label="Which category does your project fit in?"
@@ -209,7 +161,7 @@ const submitForm = async () => {
             min="0"
             max="100000"
             class="range"
-            step="10000"
+            step="5000"
             v-model.number="form.softCap"
             hint="Soft cap is the minimum amount of money that you need to raise
                 in order to start your project."
@@ -243,7 +195,7 @@ const submitForm = async () => {
             min="0"
             max="100000"
             class="range"
-            step="10000"
+            step="5000"
             v-model.number="form.hardCap"
             hint="Hard cap is the maximum amount of money that you need to raise
                 in order to start your project."
@@ -296,9 +248,9 @@ const submitForm = async () => {
               class="fixed w-[500px]"
               :project="{
                 ...form,
-                backers,
-                pledged,
-                funded: funded.toString(),
+                backers: Math.floor(Math.random() * 1000),
+                pledged: 0,
+                funded: Math.floor(Math.random() * 10000).toString(),
                 finishesAt: form.finishesAt.toString(),
                 startsAt: form.startsAt.toString(),
                 title: form.title || 'Your title here',

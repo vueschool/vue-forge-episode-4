@@ -451,3 +451,6 @@ VALUES
     '2023-07-22 14:30:00',
     '2023-07-22 14:30:00'
   );
+
+INSERT INTO "storage"."buckets" (id, name, public, avif_autodetection)
+VALUES ('projects', 'projects', true, false); 

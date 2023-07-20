@@ -17,7 +17,7 @@ export default defineNuxtConfig({
     options: {
       target: "http://localhost:55321",
       changeOrigin: true,
-      pathFilter: ["/rest/**", "/auth/**"],
+      pathFilter: ["/rest/**", "/auth/**", "/storage/**"],
     },
   },
 });
