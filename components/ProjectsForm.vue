@@ -2,6 +2,31 @@
 import { watchDebounced } from "@vueuse/core";
 import { useFilePreview } from "~/composables/useFilePreview";
 import { CategoryT, UuidT } from "~/types";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as zod from "zod";
+
+// Validation
+const validationSchema = toTypedSchema(
+  zod.object({
+    title: zod
+      .string()
+      .nonempty("Title is required")
+      .min(10, { message: "Title must be at least 10 characters long" }),
+    description: zod.string().nonempty("Description is required"),
+    categoryUuid: zod.string().nonempty("Category is required"),
+    softCap: zod
+      .number()
+      .min(10000, { message: "Too low" })
+      .max(100000, { message: "Too high" }),
+    hardCap: zod
+      .number()
+      .min(10000, { message: "Too low" })
+      .max(100000, { message: "Too high" }),
+    startDate: zod.date().min(new Date()),
+    endDate: zod.date().min(new Date(new Date().getMonth() + 6)),
+  })
+);
+
 type ProjectProps = {
   uuid?: UuidT | null | undefined;
 };
@@ -17,8 +42,8 @@ const form = reactive({
   description: "",
   image: "",
   categoryUuid: "",
-  softCap: 0,
-  hardCap: 0,
+  softCap: 10_000,
+  hardCap: 25_000,
   finishesAt: new Date().toString(),
   startsAt: new Date().toString(),
 });
@@ -72,15 +97,15 @@ const addImage = () => {
 };
 
 const submitForm = async () => {
-  const newForm = await create({
-    ...form,
-    hardCap: form.hardCap.toString(),
-    softCap: form.softCap.toString(),
-    excerpt: `${form.description.substring(0, 130)} ...`,
-    image: form.image || "https://placehold.co/500x320",
-  });
+  // const newForm = await create({
+  //   ...form,
+  //   hardCap: form.hardCap.toString(),
+  //   softCap: form.softCap.toString(),
+  //   excerpt: `${form.description.substring(0, 130)} ...`,
+  //   image: form.image || "https://placehold.co/500x320",
+  // });
   useAlerts().success("Project created");
-  navigateTo(`/projects/${newForm.uuid}`);
+  // navigateTo(`/projects/${newForm.uuid}`);
 };
 </script>
 
@@ -91,20 +116,30 @@ const submitForm = async () => {
     </div>
 
     <div class="grid grid-cols-12">
-      <form @submit.prevent="submitForm" class="w-full col-span-8">
+      <Form
+        @submit="submitForm"
+        class="w-full col-span-8"
+        :validation-schema="validationSchema"
+      >
         <div
           class="relative flex flex-col items-center justify-start w-full h-full px-8 space-y-4"
         >
           <div class="w-full max-w-full form-control">
             <label class="label">
               <span class="label-text">What is your projects name?</span>
+              <span class="label-text-alt text-error">
+                <ErrorMessage name="title" />
+              </span>
             </label>
-            <input
+
+            <Field
               v-model="form.title"
+              name="title"
               type="text"
               placeholder="Your title here"
               class="w-full input input-bordered"
             />
+
             <label class="label">
               <span class="text-gray-400 label-text-alt"
                 >Use a very handy title that people could identify your
@@ -116,12 +151,18 @@ const submitForm = async () => {
           <div class="w-full max-w-full form-control">
             <label class="label">
               <span class="label-text">What is your project about?</span>
+              <span class="label-text-alt text-error">
+                <ErrorMessage name="description" />
+              </span>
             </label>
-            <textarea
+            <Field
+              as="textarea"
+              name="description"
               v-model="form.description"
               class="w-full h-56 textarea textarea-bordered"
               placeholder="Description"
-            ></textarea>
+            ></Field>
+            <ErrorMessage name="description" />
             <label class="label">
               <span class="text-gray-400 label-text-alt"
                 >Describe with full detail your project so that people
@@ -153,8 +194,16 @@ const submitForm = async () => {
               <span class="label-text"
                 >Which category does your project fit in?</span
               >
+              <span class="label-text-alt text-error">
+                <ErrorMessage name="categoryUuid" />
+              </span>
             </label>
-            <select v-model="form.categoryUuid" class="select select-bordered">
+            <Field
+              as="select"
+              name="categoryUuid"
+              v-model="form.categoryUuid"
+              class="select select-bordered"
+            >
               <option disabled selected :value="null">Pick one</option>
               <option
                 v-for="category in categories"
@@ -163,7 +212,8 @@ const submitForm = async () => {
               >
                 {{ category.name }}
               </option>
-            </select>
+            </Field>
+
             <label class="label">
               <span class="text-gray-400 label-text-alt"
                 >Select the category that your project best fits in.</span
@@ -176,17 +226,22 @@ const submitForm = async () => {
               <span class="label-text"
                 >What is the soft cap of your project?</span
               >
-              <span class="label-text-alt"
-                ><Money :amount="form.softCap"
-              /></span>
+              <span class="label-text-alt">
+                <Money :amount="form.softCap" />
+                <span class="text-error">
+                  <ErrorMessage name="softCap" />
+                </span>
+              </span>
             </label>
-            <input
+
+            <Field
+              name="softCap"
               type="range"
               min="0"
               max="100000"
               class="range"
               step="10000"
-              v-model="form.softCap"
+              v-model.number="form.softCap"
             />
             <div class="flex justify-between w-full px-2 text-xs">
               <span>|</span>
@@ -215,13 +270,20 @@ const submitForm = async () => {
               <span class="label-text"
                 >What is the hard cap of your project?</span
               >
-              <span class="label-text-alt"><Money :amount="hardCap" /></span>
+              <span class="label-text-alt">
+                <Money :amount="hardCap" />
+                <span class="text-error">
+                  <ErrorMessage name="hardCap" />
+                </span>
+              </span>
             </label>
-            <input
+
+            <Field
               type="range"
+              name="hardCap"
               min="0"
               max="100000"
-              v-model="form.hardCap"
+              v-model.number="form.hardCap"
               class="range"
               step="10000"
             />
@@ -252,8 +314,12 @@ const submitForm = async () => {
               <span class="label-text">
                 When should your project funding start?
               </span>
+              <span class="label-text-alt">
+                <ErrorMessage name="startsAt" />
+              </span>
             </label>
-            <input
+            <Field
+              name="startsAt"
               v-model="form.startsAt"
               type="date"
               class="w-full input input-bordered"
@@ -270,12 +336,17 @@ const submitForm = async () => {
               <span class="label-text">
                 When should your project funding end?
               </span>
+              <span class="label-text-alt">
+                <ErrorMessage name="finishesAt" />
+              </span>
             </label>
-            <input
+            <Field
+              name="finishesAt"
               v-model="form.finishesAt"
               type="date"
               class="w-full input input-bordered"
             />
+
             <label class="label">
               <span class="text-gray-400 label-text-alt">
                 This is the date that your project will stop receiving funds.
@@ -287,7 +358,7 @@ const submitForm = async () => {
             <button class="btn btn-primary">Publish your project</button>
           </div>
         </div>
-      </form>
+      </Form>
       <div class="h-full col-span-4">
         <div class="max-w-[500px] px-8">
           <ClientOnly>

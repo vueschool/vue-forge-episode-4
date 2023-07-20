@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     "@nuxtjs/color-mode",
     "@nuxtjs/supabase",
     "@vueuse/nuxt",
+    "@vee-validate/nuxt",
   ],
   colorMode: {
     preference: "cupcake", // default theme
