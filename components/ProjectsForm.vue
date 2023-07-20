@@ -30,10 +30,12 @@ const validationSchema = toTypedSchema(
     startsAt: zod.custom<`${string}`>(
       (val) => {
         if (typeof val !== "string") return false;
-        const isInFuture = new Date(val) > new Date();
-        return isInFuture;
+        const selectedDate = new Date(`${val} 00:00:00`);
+        const isInFuture = selectedDate > new Date();
+        const isToday = selectedDate.getDate() === new Date().getDate();
+        return isInFuture || isToday;
       },
-      { message: "Start date must be in the future" }
+      { message: "Start date must be today or later" }
     ),
     finishesAt: zod.custom<`${string}`>(
       (val) => {
