@@ -5,6 +5,13 @@ import { CategoryT, UuidT } from "~/types";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as zod from "zod";
 
+type ProjectProps = {
+  uuid?: UuidT | null | undefined;
+};
+const props = defineProps<ProjectProps>();
+
+const { create } = useProjects();
+
 // Validation
 const validationSchema = toTypedSchema(
   zod.object({
@@ -42,16 +49,12 @@ const validationSchema = toTypedSchema(
   })
 );
 
-type ProjectProps = {
-  uuid?: UuidT | null | undefined;
-};
-const props = defineProps<ProjectProps>();
-
-const { create } = useProjects();
-
+// Get categories
 const { list: categories, fetchAll } = useCategories();
 fetchAll();
 
+// Set initial form values
+// and keep up with form state
 const form = reactive({
   title: "",
   description: "",
@@ -115,16 +118,17 @@ const addImage = () => {
   }
 };
 
+// handle form submit
 const submitForm = async () => {
-  // const newForm = await create({
-  //   ...form,
-  //   hardCap: form.hardCap.toString(),
-  //   softCap: form.softCap.toString(),
-  //   excerpt: `${form.description.substring(0, 130)} ...`,
-  //   image: form.image || "https://placehold.co/500x320",
-  // });
+  const newForm = await create({
+    ...form,
+    hardCap: form.hardCap.toString(),
+    softCap: form.softCap.toString(),
+    excerpt: `${form.description.substring(0, 130)} ...`,
+    image: form.image || "https://placehold.co/500x320",
+  });
   useAlerts().success("Project created");
-  // navigateTo(`/projects/${newForm.uuid}`);
+  navigateTo(`/projects/${newForm.uuid}`);
 };
 </script>
 
