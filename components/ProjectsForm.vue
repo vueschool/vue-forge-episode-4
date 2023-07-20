@@ -2,6 +2,9 @@
 import { watchDebounced } from "@vueuse/core";
 import { useFilePreview } from "~/composables/useFilePreview";
 import { CategoryT, UuidT } from "~/types";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as zod from "zod";
+
 type ProjectProps = {
   uuid?: UuidT | null | undefined;
 };
@@ -9,19 +12,63 @@ const props = defineProps<ProjectProps>();
 
 const { create } = useProjects();
 
+// Validation
+const validationSchema = toTypedSchema(
+  zod.object({
+    title: zod
+      .string()
+      .nonempty("Title is required")
+      .min(10, { message: "Title must be at least 10 characters long" }),
+    description: zod.string().nonempty("Description is required"),
+    categoryUuid: zod.string().nonempty("Category is required"),
+    softCap: zod
+      .number()
+      .min(10000, { message: "Too low" })
+      .max(100000, { message: "Too high" }),
+    hardCap: zod
+      .number()
+      .min(10000, { message: "Too low" })
+      .max(100000, { message: "Too high" }),
+    startsAt: zod.custom<`${string}`>(
+      (val) => {
+        if (typeof val !== "string") return false;
+        const isInFuture = new Date(val) > new Date();
+        return isInFuture;
+      },
+      { message: "Start date must be in the future" }
+    ),
+    finishesAt: zod.custom<`${string}`>(
+      (val) => {
+        if (typeof val !== "string") return false;
+        const isInFuture = new Date(val) > new Date();
+        const isLessThans6MonthsOut = generate6MonthsAwayDate() > new Date(val);
+        return isInFuture && isLessThans6MonthsOut;
+      },
+      { message: "End date must be no more than 6 months away" }
+    ),
+  })
+);
+
+// Get categories
 const { list: categories, fetchAll } = useCategories();
 fetchAll();
 
+// Set initial form values
+// and keep up with form state
 const form = reactive({
   title: "",
   description: "",
   image: "",
   categoryUuid: "",
-  softCap: 0,
-  hardCap: 0,
-  finishesAt: new Date().toString(),
-  startsAt: new Date().toString(),
+  softCap: 10_000,
+  hardCap: 25_000,
+  startsAt: useDateFormat(new Date(), "YYYY-MM-DD").value,
+  finishesAt: useDateFormat(generate6MonthsAwayDate(), "YYYY-MM-DD").value,
 });
+
+function generate6MonthsAwayDate() {
+  return new Date(new Date().setMonth(new Date().getMonth() + 6));
+}
 
 const softCap = computed(() => {
   return parseInt(`${form.softCap}`);
@@ -71,6 +118,7 @@ const addImage = () => {
   }
 };
 
+// handle form submit
 const submitForm = async () => {
   const newForm = await create({
     ...form,
@@ -91,45 +139,32 @@ const submitForm = async () => {
     </div>
 
     <div class="grid grid-cols-12">
-      <form @submit.prevent="submitForm" class="w-full col-span-8">
+      <Form
+        @submit="submitForm"
+        class="w-full col-span-8"
+        :validation-schema="validationSchema"
+      >
         <div
           class="relative flex flex-col items-center justify-start w-full h-full px-8 space-y-4"
         >
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">What is your projects name?</span>
-            </label>
-            <input
-              v-model="form.title"
-              type="text"
-              placeholder="Your title here"
-              class="w-full input input-bordered"
-            />
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Use a very handy title that people could identify your
-                project</span
-              >
-            </label>
-          </div>
+          <FormField
+            label="What is your projects name?"
+            name="title"
+            v-model="form.title"
+            hint="Use a very handy title that people could identify your
+                project"
+          />
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">What is your project about?</span>
-            </label>
-            <textarea
-              v-model="form.description"
-              class="w-full h-56 textarea textarea-bordered"
-              placeholder="Description"
-            ></textarea>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Describe with full detail your project so that people
-                understand exactly what it is about.</span
-              >
-            </label>
-          </div>
+          <FormField
+            label="What is your project about?"
+            name="description"
+            v-model="form.description"
+            as="textarea"
+            hint="Describe with full detail your project so that people
+                understand exactly what it is about."
+          />
 
+          <!-- TODO: take care of image upload -->
           <div class="w-full max-w-full form-control">
             <label class="label">
               <span class="label-text">Upload an image</span>
@@ -148,146 +183,110 @@ const submitForm = async () => {
             </label>
           </div>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >Which category does your project fit in?</span
-              >
-            </label>
-            <select v-model="form.categoryUuid" class="select select-bordered">
-              <option disabled selected :value="null">Pick one</option>
-              <option
-                v-for="category in categories"
-                :key="category.uuid"
-                :value="category.uuid"
-              >
-                {{ category.name }}
-              </option>
-            </select>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Select the category that your project best fits in.</span
-              >
-            </label>
-          </div>
+          <FormField
+            label="Which category does your project fit in?"
+            as="select"
+            name="categoryUuid"
+            v-model="form.categoryUuid"
+            hint="Selecting a fitting category ensures the right people find your project."
+          >
+            <option disabled selected :value="null">Pick one</option>
+            <option
+              v-for="category in categories"
+              :key="category.uuid"
+              :value="category.uuid"
+            >
+              {{ category.name }}
+            </option>
+          </FormField>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >What is the soft cap of your project?</span
-              >
-              <span class="label-text-alt"
-                ><Money :amount="form.softCap"
-              /></span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100000"
-              class="range"
-              step="10000"
-              v-model="form.softCap"
-            />
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span><Money :amount="10000" /></span>
-              <span><Money :amount="25000" /></span>
-              <span><Money :amount="50000" /></span>
-              <span><Money :amount="75000" /></span>
-              <span><Money :amount="100000" /></span>
-            </div>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                Soft cap is the minimum amount of money that you need to raise
-                in order to start your project.
-              </span>
-            </label>
-          </div>
+          <FormField
+            label="What is the soft cap of your project?"
+            name="softCap"
+            type="range"
+            min="0"
+            max="100000"
+            class="range"
+            step="10000"
+            v-model.number="form.softCap"
+            hint="Soft cap is the minimum amount of money that you need to raise
+                in order to start your project."
+          >
+            <template #label-text-alt>
+              <Money :amount="form.softCap" />
+            </template>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >What is the hard cap of your project?</span
-              >
-              <span class="label-text-alt"><Money :amount="hardCap" /></span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100000"
-              v-model="form.hardCap"
-              class="range"
-              step="10000"
-            />
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span><Money :amount="10000" /></span>
-              <span><Money :amount="25000" /></span>
-              <span><Money :amount="50000" /></span>
-              <span><Money :amount="75000" /></span>
-              <span><Money :amount="100000" /></span>
-            </div>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                Hard cap is the maximum amount of money that you need to raise
-                in order to start your project.
-              </span>
-            </label>
-          </div>
+            <template #after-input>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span><Money :amount="10000" /></span>
+                <span><Money :amount="25000" /></span>
+                <span><Money :amount="50000" /></span>
+                <span><Money :amount="75000" /></span>
+                <span><Money :amount="100000" /></span>
+              </div>
+            </template>
+          </FormField>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">
-                When should your project funding start?
-              </span>
-            </label>
-            <input
-              v-model="form.startsAt"
-              type="date"
-              class="w-full input input-bordered"
-            />
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                This is the date that your project will start receiving funds.
-              </span>
-            </label>
-          </div>
+          <FormField
+            label="What is the hard cap of your project?"
+            name="hardCap"
+            type="range"
+            min="0"
+            max="100000"
+            class="range"
+            step="10000"
+            v-model.number="form.hardCap"
+            hint="Hard cap is the maximum amount of money that you need to raise
+                in order to start your project."
+          >
+            <template #label-text-alt>
+              <Money :amount="form.hardCap" />
+            </template>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">
-                When should your project funding end?
-              </span>
-            </label>
-            <input
-              v-model="form.finishesAt"
-              type="date"
-              class="w-full input input-bordered"
-            />
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                This is the date that your project will stop receiving funds.
-              </span>
-            </label>
-          </div>
+            <template #after-input>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span><Money :amount="10000" /></span>
+                <span><Money :amount="25000" /></span>
+                <span><Money :amount="50000" /></span>
+                <span><Money :amount="75000" /></span>
+                <span><Money :amount="100000" /></span>
+              </div>
+            </template>
+          </FormField>
 
-          <div class="w-full max-w-full form-control">
-            <button class="btn btn-primary">Publish your project</button>
-          </div>
+          <FormField
+            label="When should your project funding start?"
+            name="startsAt"
+            type="date"
+            v-model="form.startsAt"
+            hint="This is the date that your project will open to start receiving funds."
+          />
+
+          <FormField
+            label="When should your project funding end?"
+            name="finishesAt"
+            type="date"
+            v-model="form.finishesAt"
+            hint="This is the date that your project will stop receiving funds."
+          />
+
+          <button class="w-full btn btn-primary">Publish your project</button>
         </div>
-      </form>
+      </Form>
       <div class="h-full col-span-4">
         <div class="max-w-[500px] px-8">
           <ClientOnly>
