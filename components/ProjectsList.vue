@@ -13,7 +13,7 @@ fetchProjects({ page: 1 });
       <li v-for="project in projects" :key="project.uuid">
         <ProjectCard
           :project="project"
-          :category-name="project.categories?.name"
+          :category-name="project.category?.name"
         />
       </li>
     </ul>

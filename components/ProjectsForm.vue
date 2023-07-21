@@ -1,65 +1,92 @@
 <script setup lang="ts">
 import { watchDebounced } from "@vueuse/core";
-import { useFilePreview } from "~/composables/useFilePreview";
+import { nanoid } from 'nanoid'
 import { CategoryT, UuidT } from "~/types";
-import { PactNumber } from "@kadena/pactjs";
-import {
-	Pact,
-	createWalletConnectSign,
-	createWalletConnectQuicksign,
-	getClient,
-	isSignedCommand,
-	literal,
-	readKeyset
-} from '@kadena/client'
-import { nanoid } from "nanoid";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as zod from "zod";
 
 type ProjectProps = {
   uuid?: UuidT | null | undefined;
 };
 const props = defineProps<ProjectProps>();
 
-const { create } = useProjects();
+// Validation
+const validationSchema = toTypedSchema(
+  zod.object({
+    title: zod
+      .string()
+      .nonempty("Title is required")
+      .min(10, { message: "Title must be at least 10 characters long" }),
+    description: zod.string().nonempty("Description is required"),
+    categoryUuid: zod.string().nonempty("Category is required"),
+    softCap: zod
+      .number()
+      .min(10000, { message: "Too low" })
+      .max(100000, { message: "Too high" }),
+    hardCap: zod
+      .number()
+      .min(10000, { message: "Too low" })
+      .max(100000, { message: "Too high" }),
+    startsAt: zod.custom<`${string}`>(
+      (val) => {
+        if (typeof val !== "string") return false;
+        const selectedDate = new Date(`${val} 00:00:00`);
+        const isInFuture = selectedDate > new Date();
+        const isToday = selectedDate.getDate() === new Date().getDate();
+        return isInFuture || isToday;
+      },
+      { message: "Start date must be today or later" }
+    ),
+    finishesAt: zod.custom<`${string}`>(
+      (val) => {
+        if (typeof val !== "string") return false;
+        const isInFuture = new Date(val) > new Date();
+        const isLessThans6MonthsOut = getDateXMonthsFromNow(6) > new Date(val);
+        return isInFuture && isLessThans6MonthsOut;
+      },
+      { message: "End date must be no more than 6 months away" }
+    ),
+  })
+);
 
-const { list: categories, fetchAll } = useCategories();
-fetchAll();
-
+// Set initial form values
+// and keep up with form state
 const form = reactive({
   title: "",
   description: "",
   image: "",
   categoryUuid: "",
-  finishesAt: "",
-  softCap: 0,
-  hardCap: 0,
-  startsAt: new Date().toString(),
+  softCap: 10_000,
+  hardCap: 25_000,
+  startsAt: useDateFormat(getDateXDaysFromNow(1), "YYYY-MM-DD").value,
+  finishesAt: useDateFormat(getDateXMonthsFromNow(6), "YYYY-MM-DD").value,
 });
 
-const softCap = computed(() => {
-  return parseInt(`${form.softCap}`);
+// keep hardcap always above softcap and vice versa
+watch([() => form.softCap], ([soft]) => {
+  if (soft > form.hardCap) {
+    const plus500 = soft + 5000;
+    form.hardCap = plus500 < 10000 ? plus500 : soft;
+  }
 });
-const hardCap = computed(() => {
-  return parseInt(`${form.hardCap}`);
+watch([() => form.hardCap], ([hard]) => {
+  if (form.softCap > hard) {
+    const minus500 = hard - 5000;
+    form.softCap = minus500 < 0 ? hard : minus500;
+  }
 });
 
-watchDebounced(
-  [softCap, hardCap],
-  ([soft, hard]) => {
-    if (soft > hard) {
-      form.hardCap = hard !== 10000 ? soft + 10000 : soft;
-    }
-  },
-  { debounce: 500, maxWait: 1000 }
-);
-
-const fileInput = ref(null);
-
+// Get categories for dropdown
+const { list: categories, fetchAll } = useCategories();
+fetchAll();
 const category = computed(() => {
   return categories.value.find(
     (category) => category.uuid === form.categoryUuid
   );
 });
 
+// handle form submit
+const { create: createProjectInDB } = useProjects();
 const finishesAt = computed(() => {
   return form.finishesAt ? new Date(form?.finishesAt) : null;
 });
@@ -103,163 +130,52 @@ watchDebounced(
 	{ debounce: 500, maxWait: 1000 }
 );
 
-
-const pledged = computed(() => {
-  return Math.floor(Math.random() * 100);
-});
-
-const backers = computed(() => {
-  return Math.floor(Math.random() * 1000);
-});
-
-const funded = computed(() => {
-  return Math.floor(Math.random() * 10000);
-});
-
-const addImage = () => {
-  const files = fileInput.value.files;
-  if (files && files[0]) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      form.image = e.target.result;
-    };
-    reader.readAsDataURL(files[0]);
-  }
-};
-
-const { client, session, connect, pairings } = useWalletConnect();
-
-const hasErrors = computed( () => Object.keys(errors).some((key) => errors[key]))
-
-const validate = async () => {
-	await validateFinishDateIsAfterStartDate()
-	if (hasErrors.value) throw new Error("Form has errors")
-}
-
-
-const onBeforeSubmit = async () => {
-	try {
-		await validate()
-		submitForm()
-	} catch(error) { console.log(error) }
-	
-
-}
-
-type Account = `${'k' | 'w'}:${string}` | string;
-const keyFromAccount = (account: Account): string => {
-	return account.split(':')[1];
-}
-
-const getProjectStatus = async () => {
-	const client = getClient()
-	const { chain, networkId } = useWallet()
-	const publicKey = `6c63dda2d4b2b6d1d10537484d7279619283371b3ba62957a773676369944b17`;
-	const projectOwnerAccount = `k:${publicKey}`;
-	const transaction = Pact.builder
-		.execution(
-			Pact.modules['free.crowdfund']["read-project-fundstate"](
-				 'BCmST9WolLla2DdAbW1lO'
-			)
-		)
-		.setNetworkId(networkId.value) //fast-development - https://github.com/kadena-community/crowdfund
-		.setMeta({
-			chainId: chain.value, // instruct everyone to use chain 0 on devnet
-		})
-		.createTransaction()
-		// const response = await  client.preflight(transaction)
-		const response = await client.dirtyRead(transaction)
-		console.log(response)
-}
-
-
-getProjectStatus()
-
-
+const { create: createOnBlockchain, listen } = usePact()
 const submitForm = async () => {
-  try {
-		await connect()
-    // this is from the wallet
-    const publicKey = `6c63dda2d4b2b6d1d10537484d7279619283371b3ba62957a773676369944b17`;
-    const projectOwnerAccount = `k:${publicKey}`;
-    if (!publicKey) throw new Error("Public key required to build transaction");
-    if (!client.value)
-      throw new Error("wallet connect client required to build transaction");
-    // const {build} = usePactBuilder();
+	// The result is the request Key, we should save it in local storage
+	// start listening to the request key and create the project on the WEB2.0
+	// backend, setting the status to pending.
+	// Listening is a long term process, once listening is done, we should
+	// update the status to success or error.
+	
+	// If the user reloads the page, we should check if the request key is
+	// present in local storage, if so, we should start listening to the
+	// request key again.
+	const { requestKey } = await createOnBlockchain({
+		name: form.title,
+		startsAt: form.startsAt,
+		finishesAt: form.finishesAt,
+		softCap: form.softCap,
+		hardCap: form.hardCap,
+	})
+	
+	if (requestKey) {
+		const newForm = await createProjectInDB({
+			...form,
+			hardCap: form.hardCap.toString(),
+			softCap: form.softCap.toString(),
+			excerpt: `${form.description.substring(0, 130)} ...`,
+			image: form.image || "https://placehold.co/500x320",
+			requestKey,
+		});
+		listen(requestKey)
+			.then((result) => {
+			// update project status on DB with response from blockchain
+			if (result.result.status === "success") {
+				console.log("success", result);
+				// data has been stored in the blockchain
+				// we can connect it with the data in the database
 
-    // build(publicKey, createProject())
-
-    // createProject();
-
-    // const {createProject, fundProject} = usePact()
-		const { chain, networkId } = useWallet()
-    const transaction = Pact.builder
-      .execution(
-				Pact.modules['free.crowdfund']["create-project"](
-				  nanoid(),
-				  form.title,
-					literal('coin'),
-				  new PactNumber(form.hardCap).toPactDecimal(),
-				  new PactNumber(form.softCap).toPactDecimal(),
-				  new Date(form.startsAt),
-				  new Date(form.finishesAt),
-				  projectOwnerAccount,
-					()=>"(read-keyset 'owner-guard)"
-				)
-      )
-      .addKeyset("owner-guard", "keys-all", publicKey)
-      .setNetworkId(networkId.value) //fast-development - https://github.com/kadena-community/crowdfund
-      .setMeta({
-        chainId: chain.value, // instruct everyone to use chain 0 on devnet
-	      sender: projectOwnerAccount,
-      })
-      .addSigner(publicKey)
-      .createTransaction();
-		
-		
-		console.log('transaction', transaction)
-	  const signWithWalletConnect = createWalletConnectQuicksign(
-	    client.value,
-			session.value,
-			`kadena:${networkId.value}`,
-		);
-    // const signWithWalletConnect = createWalletConnectSign(
-	  //   client.value,
-    //   session.value,
-    //   `kadena:${networkId.value}`,
-    // );
-    const signedPactCommand = await signWithWalletConnect(transaction);
-		console.log('signedPactCommand', signedPactCommand)
-    if (isSignedCommand(signedPactCommand)) {
-      const url = ""; // this will be the local url for devnet and should pass in below
-      const client = getClient();
-      const requestKey = await client.submit(signedPactCommand);
-			const options = { chainId: chain.value, networkId: networkId.value }
-      const result = await client.listen(requestKey);
-			console.log(result)
-      if (result.result.status === "success") {
-        console.log("success", result);
-        // data has been stored in the blockchain
-        // we can connect it with the data in the database
-      } else {
-        console.log("nope");
-        // there was an error alert
-      }
-    }
-  } catch (err) {
-    console.log(err);
-    // alert there was an error submitting to blockchain
-  }
-
-  const newForm = await create({
-    ...form,
-    hardCap: form.hardCap.toString(),
-    softCap: form.softCap.toString(),
-    excerpt: `${form.description.substring(0, 130)} ...`,
-    image: form.image || "https://placehold.co/500x320",
-  });
-  useAlerts().success("Project created");
-  navigateTo(`/projects/${newForm.uuid}`);
+			} else {
+				console.log("nope");
+				// there was an error alert
+			}
+		})
+		useAlerts().success("Project created");
+		navigateTo(`/projects/${newForm.uuid}`);
+	} else {
+		useAlerts().error("There was an error creating your project!");
+	}
 };
 </script>
 
@@ -270,211 +186,140 @@ const submitForm = async () => {
     </div>
 
     <div class="grid grid-cols-12">
-      <form @submit.prevent="onBeforeSubmit" class="w-full col-span-8">
+      <Form
+        @submit="submitForm"
+        class="w-full col-span-8"
+        :validation-schema="validationSchema"
+      >
         <div
           class="relative flex flex-col items-center justify-start w-full h-full px-8 space-y-4"
         >
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">What is your projects name?</span>
-            </label>
-            <input
-              v-model="form.title"
-              type="text"
-              placeholder="Your title here"
-              class="w-full input input-bordered"
-            />
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Use a very handy title that people could identify your
-                project</span
-              >
-            </label>
-          </div>
+          <FormField
+            label="What is your projects name?"
+            name="title"
+            v-model="form.title"
+            hint="Use a very handy title that people could identify your
+                project"
+          />
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">What is your project about?</span>
-            </label>
-            <textarea
-              v-model="form.description"
-              class="w-full h-56 textarea textarea-bordered"
-              placeholder="Description"
-            ></textarea>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Describe with full detail your project so that people
-                understand exactly what it is about.</span
-              >
-            </label>
-          </div>
+          <FormField
+            label="What is your project about?"
+            name="description"
+            v-model="form.description"
+            as="textarea"
+            hint="Describe with full detail your project so that people
+                understand exactly what it is about."
+          />
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text">Upload an image</span>
-            </label>
-            <input
-              @change="addImage"
-              ref="fileInput"
-              type="file"
-              class="w-full file-input file-input-bordered"
-            />
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >If you use nice a image it's more likely that backers will
-                notice your project.</span
-              >
-            </label>
-          </div>
+          <AppFileUpload
+            bucket="projects"
+            @file:uploaded="form.image = $event"
+          />
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >Which category does your project fit in?</span
-              >
-            </label>
-            <select v-model="form.categoryUuid" class="select select-bordered">
-              <option disabled selected :value="null">Pick one</option>
-              <option
-                v-for="category in categories"
-                :key="category.uuid"
-                :value="category.uuid"
-              >
-                {{ category.name }}
-              </option>
-            </select>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt"
-                >Select the category that your project best fits in.</span
-              >
-            </label>
-          </div>
+          <FormField
+            label="Which category does your project fit in?"
+            as="select"
+            name="categoryUuid"
+            v-model="form.categoryUuid"
+            hint="Selecting a fitting category ensures the right people find your project."
+          >
+            <option disabled selected :value="null">Pick one</option>
+            <option
+              v-for="category in categories"
+              :key="category.uuid"
+              :value="category.uuid"
+            >
+              {{ category.name }}
+            </option>
+          </FormField>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >What is the soft cap of your project?</span
-              >
-              <span class="label-text-alt"
-                ><Money :amount="form.softCap"
-              /></span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100000"
-              class="range"
-              step="10000"
-              v-model="form.softCap"
-            />
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span><Money :amount="10000" /></span>
-              <span><Money :amount="25000" /></span>
-              <span><Money :amount="50000" /></span>
-              <span><Money :amount="75000" /></span>
-              <span><Money :amount="100000" /></span>
-            </div>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                Soft cap is the minimum amount of money that you need to raise
-                in order to start your project.
-              </span>
-            </label>
-          </div>
+          <FormField
+            label="What is the soft cap of your project?"
+            name="softCap"
+            type="range"
+            min="0"
+            max="100000"
+            class="range"
+            step="5000"
+            v-model.number="form.softCap"
+            hint="Soft cap is the minimum amount of money that you need to raise
+                in order to start your project."
+          >
+            <template #label-text-alt>
+              <Money :amount="form.softCap" />
+            </template>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"
-                >What is the hard cap of your project?</span
-              >
-              <span class="label-text-alt"><Money :amount="hardCap" /></span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100000"
-              v-model="form.hardCap"
-              class="range"
-              step="10000"
-            />
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span><Money :amount="10000" /></span>
-              <span><Money :amount="25000" /></span>
-              <span><Money :amount="50000" /></span>
-              <span><Money :amount="75000" /></span>
-              <span><Money :amount="100000" /></span>
-            </div>
-            <label class="label">
-              <span class="text-gray-400 label-text-alt">
-                Hard cap is the maximum amount of money that you need to raise
-                in order to start your project.
-              </span>
-            </label>
-          </div>
+            <template #after-input>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span><Money :amount="10000" /></span>
+                <span><Money :amount="25000" /></span>
+                <span><Money :amount="50000" /></span>
+                <span><Money :amount="75000" /></span>
+                <span><Money :amount="100000" /></span>
+              </div>
+            </template>
+          </FormField>
 
-          <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"  :class="{'text-red-600 font-bold' :  errors.startsAt}">
-	              When should your project funding start?
-              </span>
-            </label>
-            <input
-              v-model="form.startsAt"
-              type="date"
-              class="w-full input input-bordered"
-              :class="{ 'input-error text-red-600': errors.startsAt }"
-            />
-            <label class="label">
-	            <span v-if="errors.startsAt" class="text-red-600 label-text-alt">
-			          {{ errors.startsAt }}
-		            </span>
-              <span v-else class="text-gray-400 label-text-alt">
-                This is the date that your project will start receiving funds.
-              </span>
-            </label>
-          </div>
-	        
-	        <div class="w-full max-w-full form-control">
-            <label class="label">
-              <span class="label-text"  :class="{'text-red-600 font-bold' :  errors.finishesAt}">
-	              When should your project funding end?
-              </span>
-            </label>
-            <input
-              v-model="form.finishesAt"
-              type="date"
-              class="w-full input input-bordered"
-              :class="{ 'input-error text-red-600': errors.finishesAt }"
-            />
-            <label class="label">
-	             <span v-if="errors.finishesAt" class="text-red-600 label-text-alt">
-			          {{ errors.finishesAt }}
-		            </span>
-              <span v-else class="text-gray-400 label-text-alt">
-                This is the date that your project will stop receiving funds.
-              </span>
-            </label>
-          </div>
+          <FormField
+            label="What is the hard cap of your project?"
+            name="hardCap"
+            type="range"
+            min="0"
+            max="100000"
+            class="range"
+            step="5000"
+            v-model.number="form.hardCap"
+            hint="Hard cap is the maximum amount of money that you need to raise
+                in order to start your project."
+          >
+            <template #label-text-alt>
+              <Money :amount="form.hardCap" />
+            </template>
 
-          <div class="w-full max-w-full form-control">
-            <button class="btn btn-primary">Publish your project</button>
-          </div>
+            <template #after-input>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span><Money :amount="10000" /></span>
+                <span><Money :amount="25000" /></span>
+                <span><Money :amount="50000" /></span>
+                <span><Money :amount="75000" /></span>
+                <span><Money :amount="100000" /></span>
+              </div>
+            </template>
+          </FormField>
+
+          <FormField
+            label="When should your project funding start?"
+            name="startsAt"
+            type="date"
+            v-model="form.startsAt"
+            hint="This is the date that your project will open to start receiving funds."
+          />
+
+          <FormField
+            label="When should your project funding end?"
+            name="finishesAt"
+            type="date"
+            v-model="form.finishesAt"
+            hint="This is the date that your project will stop receiving funds."
+          />
+
+          <button type="submit" class="w-full btn btn-primary">Publish your project</button>
         </div>
-      </form>
+      </Form>
       <div class="h-full col-span-4">
         <div class="max-w-[500px] px-8">
           <ClientOnly>
@@ -482,11 +327,11 @@ const submitForm = async () => {
               class="fixed w-[500px]"
               :project="{
                 ...form,
-                backers,
-                pledged,
-                funded: funded.toString(),
-                finishesAt: finishesAt? finishesAt.toString() : new Date().toString(),
-                startsAt: startsAt? startsAt.toString() : new Date().toString(),
+                backers: Math.floor(Math.random() * 1000),
+                pledged: 0,
+                funded: Math.floor(Math.random() * 10000).toString(),
+                finishesAt: form.finishesAt.toString(),
+                startsAt: form.startsAt.toString(),
                 title: form.title || 'Your title here',
                 image: form.image || 'https://placehold.co/500x320',
                 excerpt: form.description

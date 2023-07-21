@@ -60,7 +60,7 @@ const props = defineProps<{
 
       <div class="justify-between mt-8 card-actions">
         <span class="text-sm text-primary">
-          <Counter :date="project.finishesAt" />
+          <TimeAgo :date="project.finishesAt" />
         </span>
         <nuxt-link
           v-if="project.uuid"

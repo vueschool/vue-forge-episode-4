@@ -6,6 +6,8 @@ export default defineNuxtConfig({
     "@nuxtjs/color-mode",
     "@nuxtjs/supabase",
     "@vueuse/nuxt",
+    "@vee-validate/nuxt",
+    "nuxt-proxy",
   ],
   runtimeConfig: {
     public: {
@@ -25,6 +27,13 @@ export default defineNuxtConfig({
   vue: {
     compilerOptions: {
       isCustomElement: (tag) => ["w3m-core-button"].includes(tag),
+    },
+  },
+  proxy: {
+    options: {
+      target: "http://localhost:55321",
+      changeOrigin: true,
+      pathFilter: ["/rest/**", "/auth/**", "/storage/**"],
     },
   },
 });

@@ -65,8 +65,10 @@ export interface Database {
           image: string
           lastUpdatedAt: string
           pledged: number
+          requestKey: string
           softCap: string
           startsAt: string
+          status: string
           title: string
           uuid: string
         }
@@ -82,8 +84,10 @@ export interface Database {
           image: string
           lastUpdatedAt?: string
           pledged?: number
+          requestKey?: string
           softCap: string
           startsAt: string
+          status?: string
           title: string
           uuid?: string
         }
@@ -99,8 +103,10 @@ export interface Database {
           image?: string
           lastUpdatedAt?: string
           pledged?: number
+          requestKey?: string
           softCap?: string
           startsAt?: string
+          status?: string
           title?: string
           uuid?: string
         }

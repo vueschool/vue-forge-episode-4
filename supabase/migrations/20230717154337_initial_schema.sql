@@ -23,6 +23,8 @@ create table "public"."projects" (
     "hardCap" character varying(255) not null,
     "startsAt" timestamp without time zone not null,
     "finishesAt" timestamp without time zone not null,
+    "requestKey" character varying(255) not null default gen_random_uuid(),
+    "status" character varying(255) not null default 'pending',
     "createdAt" timestamp without time zone not null default now(),
     "lastUpdatedAt" timestamp without time zone not null default now()
 );
@@ -49,4 +51,4 @@ alter table "public"."projects" add constraint "projects_categoryUuid_fkey" FORE
 
 alter table "public"."projects" validate constraint "projects_categoryUuid_fkey";
 
-
+CREATE POLICY "logged in users can upload project images 1iiiika_0" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'projects');
