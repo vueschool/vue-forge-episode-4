@@ -684,12 +684,12 @@
     buffer "^6.0.3"
     tweetnacl "^1.0.3"
 
-"@kadena/pactjs-cli@^1.0.0-alpha.4":
-  version "1.0.0-alpha.4"
-  resolved "https://registry.yarnpkg.com/@kadena/pactjs-cli/-/pactjs-cli-1.0.0-alpha.4.tgz#f02c5f4c1bce6041d2909d4d80a0ca8009d76bba"
-  integrity sha512-M57QcwrC4M7IaJ8XV1w9cz3iZ52I8842oQ4EDR/L19v627NfCPxQSRdPGC4jxHiG+/GC3zcNhdMcFdcTxAqExg==
+"@kadena/pactjs-cli@1.0.0-alpha.7":
+  version "1.0.0-alpha.7"
+  resolved "https://registry.yarnpkg.com/@kadena/pactjs-cli/-/pactjs-cli-1.0.0-alpha.7.tgz#952e85d9466fc31cb62b7b49d511e049fc09f645"
+  integrity sha512-Tcbn2FxjeYzC3sMd+Y8xnF6NvW+vUsuwm4YQLBD8Vt1Kabjn0z39ZjjvzIZSxz6kMXaVTbI/6BeCzasd23kGNw==
   dependencies:
-    "@kadena/pactjs-generator" "1.0.0-alpha.4"
+    "@kadena/pactjs-generator" "1.0.0-alpha.7"
     commander "^9.3.0"
     cross-fetch "~3.1.5"
     debug "~4.3.4"
@@ -698,10 +698,10 @@
     yaml "~2.1.1"
     zod "~3.18.0"
 
-"@kadena/pactjs-generator@1.0.0-alpha.4":
-  version "1.0.0-alpha.4"
-  resolved "https://registry.yarnpkg.com/@kadena/pactjs-generator/-/pactjs-generator-1.0.0-alpha.4.tgz#30d41cc343fe404e0a4a6b5c6ae4efed310cf7f7"
-  integrity sha512-nq+vDVomHKDfrl9PKCXNJdSDmnWnQqYXe3/D/flfXt0L906aoB1nOlbR+c0obonVcosjI/ZetGKU8czWaVkgNQ==
+"@kadena/pactjs-generator@1.0.0-alpha.7":
+  version "1.0.0-alpha.7"
+  resolved "https://registry.yarnpkg.com/@kadena/pactjs-generator/-/pactjs-generator-1.0.0-alpha.7.tgz#7ecd280e86c073147a4e83237daaec124e242cf8"
+  integrity sha512-f1FGRE1jaQ1Kd88Zkod4KtICoy05c0AX8YikgykvQND+ZAFd2PiSK6J6ls5xvvVwoPy//ceMRiHmu6LnGKEEiQ==
   dependencies:
     memfs "~3.5.1"
     moo "~0.5.1"

@@ -6,8 +6,11 @@ import { PactNumber } from "@kadena/pactjs";
 import {
 	Pact,
 	createWalletConnectSign,
+	createWalletConnectQuicksign,
 	getClient,
-	isSignedCommand, literal
+	isSignedCommand,
+	literal,
+	readKeyset
 } from '@kadena/client'
 import { nanoid } from "nanoid";
 
@@ -143,13 +146,42 @@ const onBeforeSubmit = async () => {
 
 }
 
+type Account = `${'k' | 'w'}:${string}` | string;
+const keyFromAccount = (account: Account): string => {
+	return account.split(':')[1];
+}
+
+const getProjectStatus = async () => {
+	const client = getClient()
+	const { chain, networkId } = useWallet()
+	const publicKey = `6c63dda2d4b2b6d1d10537484d7279619283371b3ba62957a773676369944b17`;
+	const projectOwnerAccount = `k:${publicKey}`;
+	const transaction = Pact.builder
+		.execution(
+			Pact.modules['free.crowdfund']["read-project-fundstate"](
+				 'BCmST9WolLla2DdAbW1lO'
+			)
+		)
+		.setNetworkId(networkId.value) //fast-development - https://github.com/kadena-community/crowdfund
+		.setMeta({
+			chainId: chain.value, // instruct everyone to use chain 0 on devnet
+		})
+		.createTransaction()
+		// const response = await  client.preflight(transaction)
+		const response = await client.dirtyRead(transaction)
+		console.log(response)
+}
+
+
+getProjectStatus()
+
+
 const submitForm = async () => {
   try {
 		await connect()
-    const beneficiaryGuard = `(read-keyset 'ks)`; // this is from the wallet
-    const publicKey = session.value?.peer.publicKey;
+    // this is from the wallet
+    const publicKey = `6c63dda2d4b2b6d1d10537484d7279619283371b3ba62957a773676369944b17`;
     const projectOwnerAccount = `k:${publicKey}`;
-		console.log('here we go', pairings)
     if (!publicKey) throw new Error("Public key required to build transaction");
     if (!client.value)
       throw new Error("wallet connect client required to build transaction");
@@ -163,7 +195,7 @@ const submitForm = async () => {
 		const { chain, networkId } = useWallet()
     const transaction = Pact.builder
       .execution(
-				Pact.modules.crowdfund["create-project"](
+				Pact.modules['free.crowdfund']["create-project"](
 				  nanoid(),
 				  form.title,
 					literal('coin'),
@@ -172,10 +204,10 @@ const submitForm = async () => {
 				  new Date(form.startsAt),
 				  new Date(form.finishesAt),
 				  projectOwnerAccount,
-				  beneficiaryGuard
+					()=>"(read-keyset 'owner-guard)"
 				)
       )
-      .addKeyset("ks", "keys-all", publicKey)
+      .addKeyset("owner-guard", "keys-all", publicKey)
       .setNetworkId(networkId.value) //fast-development - https://github.com/kadena-community/crowdfund
       .setMeta({
         chainId: chain.value, // instruct everyone to use chain 0 on devnet
@@ -183,20 +215,28 @@ const submitForm = async () => {
       })
       .addSigner(publicKey)
       .createTransaction();
+		
+		
 		console.log('transaction', transaction)
-    const signWithWalletConnect = createWalletConnectSign(
+	  const signWithWalletConnect = createWalletConnectQuicksign(
 	    client.value,
-      session.value,
-      `kadena:${networkId.value}`,
-    );
+			session.value,
+			`kadena:${networkId.value}`,
+		);
+    // const signWithWalletConnect = createWalletConnectSign(
+	  //   client.value,
+    //   session.value,
+    //   `kadena:${networkId.value}`,
+    // );
     const signedPactCommand = await signWithWalletConnect(transaction);
 		console.log('signedPactCommand', signedPactCommand)
     if (isSignedCommand(signedPactCommand)) {
       const url = ""; // this will be the local url for devnet and should pass in below
       const client = getClient();
-      const [requestKey] = await client.submit(signedPactCommand);
+      const requestKey = await client.submit(signedPactCommand);
+			const options = { chainId: chain.value, networkId: networkId.value }
       const result = await client.listen(requestKey);
-
+			console.log(result)
       if (result.result.status === "success") {
         console.log("success", result);
         // data has been stored in the blockchain
