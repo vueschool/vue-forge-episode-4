@@ -658,10 +658,10 @@
     cross-fetch "~3.1.5"
     node-fetch "~2.6.2"
 
-"@kadena/client@^1.0.0-alpha.4":
-  version "1.0.0-alpha.4"
-  resolved "https://registry.yarnpkg.com/@kadena/client/-/client-1.0.0-alpha.4.tgz#0fdb66d57477053ed1631872f31e47357c57575d"
-  integrity sha512-hh5OnFmtAafEY2H9rT8CEDiYbbXefAG4A4gRgorDiqvhZcJB/Z40Hd6fwSGbX4OdAnGg4IRhugUslrMr9dqyoQ==
+"@kadena/client@1.0.0-alpha.8":
+  version "1.0.0-alpha.8"
+  resolved "https://registry.yarnpkg.com/@kadena/client/-/client-1.0.0-alpha.8.tgz#ccdc5f93c87dde0d5606d6c3fad4594a1e2eda96"
+  integrity sha512-6xyH0vGThL3Etm0dJgxufzvP3Ym8gYW3mhRIJ+c8dx6jx81tx1/npclcnJh6VcFSsJRdgw30hfF6f4unUWRrHQ==
   dependencies:
     "@kadena/chainweb-node-client" "0.4.2"
     "@kadena/cryptography-utils" "0.3.6"

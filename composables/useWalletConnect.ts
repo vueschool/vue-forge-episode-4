@@ -16,6 +16,22 @@ const defaultState = {
   accounts: [] as string[],
 };
 
+const requiredNamespaces = {
+  kadena: {
+    methods: [
+      "kadena_getAccounts_v1",
+      "kadena_sign_v1",
+      "kadena_quicksign_v1",
+    ],
+    chains: [
+      "kadena:mainnet01",
+      "kadena:testnet04",
+      "kadena:development",
+    ],
+    events: [],
+  },
+};
+
 export function useWalletConnect() {
   if (!process.server) {
     window.global ||= window;
@@ -49,23 +65,12 @@ export function useWalletConnect() {
     }
 
     try {
+      // const currentSession = await state.client.find({ requiredNamespaces });
+      // console.log(currentSession)
+      // if (currentSession) return
       const { uri, approval } = await state.client.connect({
         pairingTopic: pairing?.topic,
-        requiredNamespaces: {
-          kadena: {
-            methods: [
-              "kadena_getAccounts_v1",
-              "kadena_sign_v1",
-              "kadena_quicksign_v1",
-            ],
-            chains: [
-              "kadena:mainnet01",
-              "kadena:testnet04",
-              "kadena:development",
-            ],
-            events: [],
-          },
-        },
+        requiredNamespaces,
       });
 
       // Open QRCode modal if a URI was returned (i.e. we're not connecting an existing pairing).
@@ -177,9 +182,17 @@ export function useWalletConnect() {
       state.isInitializing = false;
     }
   };
-
+  
+  const currentClient = computed(() => state.client)
   createClient();
-
+  
+  watch(currentClient, async (client) => {
+    if (!client) return
+    const [currentSession] = await client.find({ requiredNamespaces });
+    await onSessionConnected(currentSession)
+    console.log("lastSession", currentSession)
+  })
+ 
   return {
     pairings: computed(() => state.pairings),
     isInitializing: computed(() => state.isInitializing),

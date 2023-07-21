@@ -4,11 +4,11 @@ import { useFilePreview } from "~/composables/useFilePreview";
 import { CategoryT, UuidT } from "~/types";
 import { PactNumber } from "@kadena/pactjs";
 import {
-  Pact,
-  createWalletConnectSign,
-  getClient,
-  isSignedCommand,
-} from "@kadena/client";
+	Pact,
+	createWalletConnectSign,
+	getClient,
+	isSignedCommand, literal
+} from '@kadena/client'
 import { nanoid } from "nanoid";
 
 type ProjectProps = {
@@ -145,7 +145,7 @@ const onBeforeSubmit = async () => {
 
 const submitForm = async () => {
   try {
-	  await connect()
+		await connect()
     const beneficiaryGuard = `(read-keyset 'ks)`; // this is from the wallet
     const publicKey = session.value?.peer.publicKey;
     const projectOwnerAccount = `k:${publicKey}`;
@@ -163,22 +163,23 @@ const submitForm = async () => {
 		const { chain, networkId } = useWallet()
     const transaction = Pact.builder
       .execution(
-        Pact.modules.crowdfund["create-project"](
-          nanoid(),
-          form.title,
-          "coin",
-          new PactNumber(form.hardCap).toPactDecimal(),
-          new PactNumber(form.softCap).toPactDecimal(),
-          new Date(form.startsAt),
-          new Date(form.finishesAt),
-          projectOwnerAccount,
-          beneficiaryGuard
-        )
+				Pact.modules.crowdfund["create-project"](
+				  nanoid(),
+				  form.title,
+					literal('coin'),
+				  new PactNumber(form.hardCap).toPactDecimal(),
+				  new PactNumber(form.softCap).toPactDecimal(),
+				  new Date(form.startsAt),
+				  new Date(form.finishesAt),
+				  projectOwnerAccount,
+				  beneficiaryGuard
+				)
       )
       .addKeyset("ks", "keys-all", publicKey)
       .setNetworkId(networkId.value) //fast-development - https://github.com/kadena-community/crowdfund
       .setMeta({
         chainId: chain.value, // instruct everyone to use chain 0 on devnet
+	      sender: projectOwnerAccount,
       })
       .addSigner(publicKey)
       .createTransaction();

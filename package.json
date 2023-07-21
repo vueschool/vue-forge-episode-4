@@ -21,7 +21,7 @@
     "supabase": "^1.77.9"
   },
   "dependencies": {
-    "@kadena/client": "^1.0.0-alpha.4",
+    "@kadena/client": "1.0.0-alpha.8",
     "@kadena/pactjs": "^0.3.0",
     "@kadena/pactjs-cli": "^1.0.0-alpha.4",
     "@nuxtjs/color-mode": "^3.3.0",
