@@ -453,4 +453,4 @@ VALUES
   );
 
 INSERT INTO "storage"."buckets" (id, name, public, avif_autodetection)
-VALUES ('projects', 'projects', true, false); 
+VALUES ('projects', 'projects', true, false);
