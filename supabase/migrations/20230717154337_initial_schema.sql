@@ -44,7 +44,7 @@ WITH CHECK (true);
 CREATE POLICY "update_project_policy"
 ON "public"."projects"
 FOR UPDATE
-USING ( auth.uid() = uuid );
+USING ( auth.uid() = "ownerId" );
 
 CREATE UNIQUE INDEX categories_pkey ON public.categories USING btree (uuid);
 
