@@ -64,7 +64,12 @@ const submitForm = async () => {
                 understand exactly what it is about."
         />
 
-        <AppFileUpload bucket="projects" @file:uploaded="form.image = $event" />
+        <AppFileUpload
+          label="Upload a cover image for your project"
+          bucket="projects"
+          @file:uploaded="form.image = $event"
+          class="mb-4"
+        />
 
         <FormField
           label="Which category does your project fit in?"

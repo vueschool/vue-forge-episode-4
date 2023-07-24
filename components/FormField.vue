@@ -46,7 +46,7 @@ export default {
 };
 </script>
 <template>
-  <div class="w-full max-w-full form-control">
+  <div class="w-full max-w-full mb-4 form-control">
     <label class="label" :for="id">
       <span class="label-text">
         <slot name="label">{{ label }}</slot>
