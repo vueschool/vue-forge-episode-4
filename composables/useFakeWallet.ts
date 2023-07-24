@@ -46,7 +46,9 @@ export function useFakeWallet() {
   };
 
   const getBalance = async () => {
-    balance.value = "600";
+    if (account.value) {
+      balance.value = "100";
+    }
     return;
   };
 
