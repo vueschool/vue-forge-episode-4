@@ -26,6 +26,9 @@ export function useFakeWallet() {
     const confirmed = confirm(
       "Wallet functionality not complete. Choose Ok to similuate connecting web 3 wallet"
     );
+    if (confirmed) {
+      account.value = "123";
+    }
     return confirmed;
   };
 
