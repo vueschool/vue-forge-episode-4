@@ -60,6 +60,7 @@ const user = useSupabaseUser();
               </NuxtLink>
             </li>
             <li><NuxtLink :to="{ name: 'logout' }">Logout</NuxtLink></li>
+            <li><Balance /></li>
           </ul>
         </div>
       </div>

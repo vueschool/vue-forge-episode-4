@@ -1,5 +1,7 @@
+import { useFakeWallet } from "./useFakeWallet";
+
 export const useWallet = () => {
-  function connect() {}
-  function disconnect() {}
-  return { connect, disconnect, account, balance, getBalance };
+  // when we're ready with the real wallet,
+  // let's import it in here and return instead of fake wallet
+  return useFakeWallet();
 };
