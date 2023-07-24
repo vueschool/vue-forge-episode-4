@@ -51,7 +51,6 @@ export function useFakeWallet() {
   };
 
   watch(account, async (value) => {
-    console.log("account watcher", value);
     if (value) {
       await getBalance();
     }
