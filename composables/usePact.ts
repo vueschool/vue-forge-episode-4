@@ -138,7 +138,7 @@ export const usePact = async () => {
 		try {
 			const publicKey = `6c63dda2d4b2b6d1d10537484d7279619283371b3ba62957a773676369944b17`;
 			const sender = createSenderObject(publicKey);
-			await connect('walletconnect');
+			await connect();
 			// this is from the wallet
 			const keyset = 'ks'
 			

@@ -75,7 +75,7 @@ export async function useWalletConnect() {
       console.log('pairings', state.pairings)
       // if (currentSession) return
       const { uri, approval } = await state.client.connect({
-        pairingTopic: state.pairings?.[0]?.topic || pairing?.topic,
+        pairingTopic: pairing?.topic,
         requiredNamespaces: lastSession?.requiredNamespaces || requiredNamespaces,
       });
       console.log('uri', uri)

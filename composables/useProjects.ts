@@ -60,10 +60,11 @@ export const useProjects = () => {
     const { data: project, error } = await supabase
       .from("projects")
       .update(data as ProjectT)
-      .match({'requestKey':  requestKey as string })
+      .eq('requestKey' , requestKey as string )
+      // .match({'requestKey':  requestKey as string })
 
     console.log(error, data)
-    if (error || !project) {
+    if (error) {
       throw new Error(error?.message || "Error updating project");
     }
     
