@@ -10,7 +10,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:reset": "npx supabase db reset && yarn db:types",
-    "db:types": "supabase gen types typescript --local > ./supabase/schema.ts"
+    "db:types": "npx supabase gen types typescript --local > ./supabase/schema.ts"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.0.2",
