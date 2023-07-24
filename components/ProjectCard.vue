@@ -2,7 +2,7 @@
 import type { Database } from "@/supabase/schema";
 
 const props = defineProps<{
-  project: Database["public"]["Tables"]["projects"]["Row"];
+  project: Partial<Database["public"]["Tables"]["projects"]["Row"]>;
   categoryName?: string;
 }>();
 </script>
