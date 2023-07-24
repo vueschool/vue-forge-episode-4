@@ -32,7 +32,7 @@ const requiredNamespaces = {
   },
 };
 
-export function useWalletConnect() {
+export async function useWalletConnect() {
   if (!process.server) {
     window.global ||= window;
   }
@@ -60,27 +60,35 @@ export function useWalletConnect() {
   };
 
   const connect = async (pairing: any) => {
+    console.log('connect', )
     if (typeof state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
-
+    const lastKeyIndex = state.client.session.getAll().length - 1
+    const lastSession = state.client.session.getAll()[lastKeyIndex]
+    console.log('lastSession', state.client)
+    await onSessionConnected(lastSession)
+    
     try {
-      // const currentSession = await state.client.find({ requiredNamespaces });
-      // console.log(currentSession)
+      const currentSession = await state.client.find({ requiredNamespaces });
+      console.log('currentSession', currentSession)
+      console.log('pairings', state.pairings)
       // if (currentSession) return
       const { uri, approval } = await state.client.connect({
-        pairingTopic: pairing?.topic,
-        requiredNamespaces,
+        pairingTopic: state.pairings?.[0]?.topic || pairing?.topic,
+        requiredNamespaces: lastSession?.requiredNamespaces || requiredNamespaces,
       });
+      console.log('uri', uri)
 
       // Open QRCode modal if a URI was returned (i.e. we're not connecting an existing pairing).
       if (uri) {
         walletConnectModal.openModal({ uri });
       }
-
+      
       const session = await approval();
       console.log("Established session:", session);
       await onSessionConnected(session);
+     
       // Update known pairings after session is connected.
       state.pairings = state.client.pairing.getAll({ active: true });
     } catch (e) {
@@ -184,7 +192,7 @@ export function useWalletConnect() {
   };
   
   const currentClient = computed(() => state.client)
-  createClient();
+  await createClient();
   
   watch(currentClient, async (client) => {
     if (!client) return

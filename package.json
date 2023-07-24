@@ -37,6 +37,7 @@
     "autoprefixer": "^10.4.14",
     "daisyui": "^3.1.7",
     "dotenv": "^16.3.1",
+    "lokijs": "^1.5.12",
     "nanoid": "^4.0.2",
     "nuxt-proxy": "^0.4.1",
     "postcss": "^8.4.24",

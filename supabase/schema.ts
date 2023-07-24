@@ -64,7 +64,9 @@ export interface Database {
           hardCap: string
           image: string
           lastUpdatedAt: string
+          ownerId: string | null
           pledged: number
+          projectId: string | null
           requestKey: string
           softCap: string
           startsAt: string
@@ -83,7 +85,9 @@ export interface Database {
           hardCap: string
           image: string
           lastUpdatedAt?: string
+          ownerId?: string | null
           pledged?: number
+          projectId?: string | null
           requestKey?: string
           softCap: string
           startsAt: string
@@ -102,7 +106,9 @@ export interface Database {
           hardCap?: string
           image?: string
           lastUpdatedAt?: string
+          ownerId?: string | null
           pledged?: number
+          projectId?: string | null
           requestKey?: string
           softCap?: string
           startsAt?: string
@@ -116,6 +122,12 @@ export interface Database {
             columns: ["categoryUuid"]
             referencedRelation: "categories"
             referencedColumns: ["uuid"]
+          },
+          {
+            foreignKeyName: "projects_ownerId_fkey"
+            columns: ["ownerId"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           }
         ]
       }

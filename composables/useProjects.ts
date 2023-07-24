@@ -55,6 +55,20 @@ export const useProjects = () => {
 
     return newProject;
   };
+  
+  const updateStatusForRequestKey = async (requestKey: string, data: Partial<ProjectT>): Promise<ProjectT> => {
+    const { data: project, error } = await supabase
+      .from("projects")
+      .update(data as ProjectT)
+      .match({'requestKey':  requestKey as string })
+
+    console.log(error, data)
+    if (error || !project) {
+      throw new Error(error?.message || "Error updating project");
+    }
+    
+    return project;
+  };
 
   return {
     item: project,
@@ -62,6 +76,7 @@ export const useProjects = () => {
     pagination,
 
     create,
+    updateStatusForRequestKey,
     fetchAll,
     fetchOne,
   };

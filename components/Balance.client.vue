@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const{ balance, getBalance, all, initialized, initialize, connect } = useWallet()
+const { connect } = await useWalletConnect()
+const{ balance, getBalance, all, initialized, initialize } = useWallet()
 
 // {initialized, connect, account, getBalance, balance }
 watch(balance, (newBalance) => {
@@ -8,8 +9,8 @@ watch(balance, (newBalance) => {
 console.log(balance)
 
 onMounted(async () => {
+	await connect()
 	await getBalance()
-	
 	console.log(balance.value)
 })
 

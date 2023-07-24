@@ -11,7 +11,9 @@ CREATE POLICY view_categories_policy ON "public"."categories" FOR SELECT
 
 create table "public"."projects" (
     "uuid" uuid not null default gen_random_uuid(),
+    "projectId" character varying(255) default NULL,
     "title" character varying(255) not null,
+    "ownerId" uuid references auth.users default auth.uid(),
     "excerpt" text not null,
     "description" text not null,
     "image" character varying(255) not null,
@@ -38,6 +40,11 @@ ON "public"."projects"
 FOR INSERT
 TO authenticated
 WITH CHECK (true);
+
+CREATE POLICY "update_project_policy"
+ON "public"."projects"
+FOR UPDATE
+USING ( auth.uid() = uuid );
 
 CREATE UNIQUE INDEX categories_pkey ON public.categories USING btree (uuid);
 

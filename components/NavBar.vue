@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import Balance from '~/components/Balance.vue'
-import { useGetBalance } from '~/composables/useGetBalance'
-
 const { fetchAll: fetchCategories, list: categories } = useCategories();
 await fetchCategories();
 const { appName } = useAppConfig();
@@ -65,9 +62,7 @@ const user = useSupabaseUser();
             <li><NuxtLink :to="{ name: 'logout' }">Logout</NuxtLink></li>
           </ul>
         </div>
-	      <ClientOnly fallback-tag="span" fallback="Loading comments...">
-		      <Balance />
-	      </ClientOnly>
+	      <Balance />
       </div>
     </div>
   </div>

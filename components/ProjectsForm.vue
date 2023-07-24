@@ -52,6 +52,7 @@ const validationSchema = toTypedSchema(
 // Set initial form values
 // and keep up with form state
 const form = reactive({
+	projectId: nanoid(),
   title: "",
   description: "",
   image: "",
@@ -130,7 +131,7 @@ watchDebounced(
 	{ debounce: 500, maxWait: 1000 }
 );
 
-const { create: createOnBlockchain, listen } = usePact()
+const { create: createOnBlockchain, listen } = await usePact()
 const submitForm = async () => {
 	// The result is the request Key, we should save it in local storage
 	// start listening to the request key and create the project on the WEB2.0
@@ -142,6 +143,7 @@ const submitForm = async () => {
 	// present in local storage, if so, we should start listening to the
 	// request key again.
 	const { requestKey } = await createOnBlockchain({
+		id: form.projectId,
 		name: form.title,
 		startsAt: form.startsAt,
 		finishesAt: form.finishesAt,
@@ -158,19 +160,7 @@ const submitForm = async () => {
 			image: form.image || "https://placehold.co/500x320",
 			requestKey,
 		});
-		listen(requestKey)
-			.then((result) => {
-			// update project status on DB with response from blockchain
-			if (result.result.status === "success") {
-				console.log("success", result);
-				// data has been stored in the blockchain
-				// we can connect it with the data in the database
-
-			} else {
-				console.log("nope");
-				// there was an error alert
-			}
-		})
+		
 		useAlerts().success("Project created");
 		navigateTo(`/projects/${newForm.uuid}`);
 	} else {
