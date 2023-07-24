@@ -53,22 +53,26 @@ export default {
       </span>
       <span class="label-text-alt">
         <slot name="label-text-alt"></slot>
+        <span class="inline-block ml-2 text-error">
+          <slot name="error-message">
+            <ErrorMessage :name="name" class="text-error" />
+          </slot>
+        </span>
       </span>
     </label>
 
     <slot name="after-label"></slot>
 
-    <input v-if="!as" v-bind="fieldAttrs" v-model="value" />
-
-    <select v-if="as === 'select'" v-bind="fieldAttrs" v-model="value">
-      <slot></slot>
-    </select>
-
-    <textarea
-      v-if="as === 'textarea'"
+    <Field
+      v-if="as !== 'select'"
+      :as="as"
       v-bind="fieldAttrs"
       v-model="value"
-    ></textarea>
+    ></Field>
+
+    <Field v-if="as === 'select'" :as="as" v-bind="fieldAttrs" v-model="value">
+      <slot></slot>
+    </Field>
 
     <slot name="after-input"></slot>
 

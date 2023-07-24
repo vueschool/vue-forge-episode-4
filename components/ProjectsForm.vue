@@ -1,4 +1,46 @@
 <script setup lang="ts">
+import { toTypedSchema } from "@vee-validate/zod";
+import * as zod from "zod";
+
+// Validation
+const validationSchema = toTypedSchema(
+  zod.object({
+    title: zod
+      .string()
+      .nonempty("Title is required")
+      .min(10, { message: "Title must be at least 10 characters long" }),
+    description: zod.string().nonempty("Description is required"),
+    categoryUuid: zod.string().nonempty("Category is required"),
+    softCap: zod
+      .number()
+      .min(10000, { message: "Too low" })
+      .max(100000, { message: "Too high" }),
+    hardCap: zod
+      .number()
+      .min(10000, { message: "Too low" })
+      .max(100000, { message: "Too high" }),
+    startsAt: zod.custom<`${string}`>(
+      (val) => {
+        if (typeof val !== "string") return false;
+        const selectedDate = new Date(`${val} 00:00:00`);
+        const isInFuture = selectedDate > new Date();
+        const isToday = selectedDate.getDate() === new Date().getDate();
+        return isInFuture || isToday;
+      },
+      { message: "Start date must be today or later" }
+    ),
+    finishesAt: zod.custom<`${string}`>(
+      (val) => {
+        if (typeof val !== "string") return false;
+        const isInFuture = new Date(val) > new Date();
+        const isLessThans6MonthsOut = getDateXMonthsFromNow(6) > new Date(val);
+        return isInFuture && isLessThans6MonthsOut;
+      },
+      { message: "End date must be no more than 6 months away" }
+    ),
+  })
+);
+
 // Set initial form values
 // and keep up with form state
 const form = reactive({
@@ -46,7 +88,11 @@ const submitForm = async () => {
     <h3 class="py-5 text-3xl">Kickstart your own project</h3>
 
     <div class="grid grid-cols-12 gap-8">
-      <form @submit.prevent="submitForm" class="w-full col-span-8">
+      <Form
+        @submit="submitForm"
+        class="w-full col-span-8"
+        :validation-schema="validationSchema"
+      >
         <FormField
           label="What is your projects name?"
           name="title"
@@ -173,7 +219,7 @@ const submitForm = async () => {
         />
 
         <button class="w-full btn btn-primary">Publish your project</button>
-      </form>
+      </Form>
       <div class="col-span-4">
         <div>
           <ClientOnly>
