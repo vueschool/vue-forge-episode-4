@@ -1,4 +1,8 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+// Get categories for dropdown
+const { list: categories, fetchAll } = useCategories();
+fetchAll();
+</script>
 
 <template>
   <div>
