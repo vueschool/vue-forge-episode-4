@@ -110,7 +110,9 @@ export function useWallet() {
       const { result } = await client.dirtyRead(transaction);
 
       if (result.status === "failure") {
-        throw new Error("Error getting balance. Account not found");
+        throw new Error(
+          `Can't get balance. Account (${account.value}) not found on network: ${networkId.value} and chain: ${chain.value}`
+        );
       }
 
       balance.value = result.data as string;
