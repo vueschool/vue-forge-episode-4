@@ -9,6 +9,7 @@ const {connect, disconnect, isConnected, publicKey, balance} = useWallet()
 	  <p>
 		  Download
 		  <a
+			  
 			  href="https://chrome.google.com/webstore/detail/eckowallet/bofddndhbegljegmpmnlbhcejofmjgbn"
 		  >
 			  Ecko Wallet
