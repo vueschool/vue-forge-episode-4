@@ -161,13 +161,10 @@ export const usePact = async () => {
 				keyset,
 				sender,
 			)
-			const { sign, connect } = useWallet()
+			const { signTransaction, connect } = useWallet()
 			await connect()
 			
-			const signedCommand = await sign(JSON.parse(transaction.cmd))
-			console.log(signedCommand)
-			// const signedCommand = await signTransaction(transaction)
-			// if(signedCommand.status === 'success') {
+			const signedCommand = await signTransaction(transaction)
 			if (isSignedCommand(signedCommand)) {
 				const url = ""; // this will be the local url for devnet and should pass in below
 				const requestKey = await submitCommand(signedCommand)

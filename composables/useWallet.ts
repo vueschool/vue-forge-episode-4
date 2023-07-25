@@ -1,4 +1,5 @@
 import { getClient, IPactCommand, Pact } from '@kadena/client'
+import { ICommand } from '@kadena/types'
 
 import { Ref } from 'vue'
 
@@ -82,7 +83,7 @@ export function useWallet () {
 	}
 	
 	const getBalance = async () => {
-		if(account.value) {
+		if (account.value) {
 			const client = getClient()
 			const transaction = Pact.builder
 				.execution((Pact.modules as any).coin['get-balance'](account.value))
@@ -97,58 +98,36 @@ export function useWallet () {
 		return
 	}
 	
-	const sign = async (parsedTransaction: any) => {
-		console.log(parsedTransaction)
-		const signingRequest: any = {
-			code: parsedTransaction.payload.exec.code ?? '',
-			data: parsedTransaction.payload.exec.data as { [key: string]: unknown },
-			caps: parsedTransaction.signers.flatMap((signer) => {
-				if (signer.clist === undefined) {
-					return [];
-				}
-				return signer.clist.map(({ name, args }) => {
-					const nameArr = name.split('.');
-
-					return {
-						role: nameArr[nameArr.length - 1],
-						description: `Description for ${name}`,
-						cap: {
-							name,
-							args,
-						},
-					};
-				});
-			}),
-			nonce: parsedTransaction.nonce,
-			chainId: parsedTransaction.meta.chainId,
-			gasLimit: parsedTransaction.meta.gasLimit,
-			gasPrice: parsedTransaction.meta.gasPrice,
-			sender: parsedTransaction.meta.sender,
-			ttl: parsedTransaction.meta.ttl,
-		};
-		// console.log(signingRequest)
-		console.log(parsedTransaction)
-		try {
-			const response = await instance.value?.request({
-				method: 'kda_requestQuickSign',
-				data: {
-					networkId: networkId.value,
-					signingCmd: signingRequest,
-					// cmdSigDatas: [
-					// 	{
-					// 		sigs: [],
-					// 		cmd: parsedTransaction,
-					// 	}]
-				}
-			});
-			
-			return response?.signedCmd
-		} catch (e) {
-			console.log(e)
+	const signTransaction = async (transaction: any): Promise<ICommand> => {
+		console.log(transaction)
+		
+		const response = await instance.value?.request({
+			method: 'kda_requestQuickSign',
+			data: {
+				networkId: networkId.value,
+				// signingCmd: signingRequest,
+				commandSigDatas: [
+					{
+						sigs: [{
+							pubKey: '6c63dda2d4b2b6d1d10537484d7279619283371b3ba62957a773676369944b17',
+							sig: undefined
+						}],
+						cmd: transaction.cmd
+					}]
+			}
+		})
+		
+		if (transaction.hash !== response?.quickSignData?.[0]?.outcome?.hash) {
+			throw Error('Hashes do not match!')
+		}
+		
+		return {
+			cmd: transaction.cmd,
+			sigs: response?.quickSignData?.[0]?.commandSigData?.sigs,
+			hash: response?.quickSignData?.[0]?.outcome?.hash
 		}
 		
 	}
-	
 	
 	watch(account, async (value) => {
 		console.log('account watcher', value)
@@ -161,7 +140,7 @@ export function useWallet () {
 	
 	return {
 		initialize,
-		sign,
+		signTransaction,
 		connect,
 		disconnect,
 		requestAccount,
