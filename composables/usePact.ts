@@ -73,7 +73,6 @@ export const usePact = async () => {
 			readKeyset(keyset)
 		)
 		
-		console.log(cmd)
 		return cmd
 	}
 	type TTransactionOptions = {
@@ -152,7 +151,6 @@ export const usePact = async () => {
 	
 	
 	const create = async (form: TProjectForm): Promise<{requestKey: string | null}>  => {
-		console.log(form)
 		await connect()
 		try {
 			if (!publicKey.value) throw new Error("Public key required to build transaction");
@@ -160,29 +158,26 @@ export const usePact = async () => {
 			const sender = createSenderObject(publicKey.value);
 			// this is from the wallet
 			const keyset = 'ks'
-			const transaction = createTransaction(
-				createProjectObject({
-					id: form.id,
-					name: form.name,
-					sender,
-					dates: {
-						startsAt: new Date(form.startsAt),
-						finishesAt: new Date(form.finishesAt),
-					},
-					hardCap: form.hardCap,
-					softCap: form.softCap,
-					keyset
-				}),
-				keyset,
+			const cmd = createProjectObject({
+				id: form.id,
+				name: form.name,
 				sender,
-			)
-			
+				dates: {
+					startsAt: new Date(form.startsAt),
+					finishesAt: new Date(form.finishesAt),
+				},
+				hardCap: form.hardCap,
+				softCap: form.softCap,
+				keyset
+			})
+			const transaction = createTransaction(cmd, keyset, sender)
 			const signedCommand = await signTransaction(transaction)
+			
 			if (isSignedCommand(signedCommand)) {
 				const url = ""; // this will be the local url for devnet and should pass in below
 				const requestKey = await submitCommand(signedCommand)
 				saveToRequestKeyLocalStorage(requestKey, 'create')
-				pollPendingRequests()
+				pollPendingRequests().then(() => null)
 				return { requestKey }
 			}
 		} catch (err) {
@@ -201,30 +196,22 @@ export const usePact = async () => {
 			const sender = createSenderObject(publicKey.value);
 			// this is from the wallet
 			const keyset = 'ks'
-	
-			const transaction = createTransaction(
-				createFundObject({
-					projectId: form.id,
-					funder: sender.account,
-					amount: form.amount,
-				}),
-				keyset,
-				sender,
-				{},
-				(withCapability)=>[
+			const cmd = createFundObject({
+				projectId: form.id,
+				funder: sender.account,
+				amount: form.amount,
+			})
+			const transaction = createTransaction(cmd, keyset, sender, {}, (withCapability)=>[
 					withCapability("coin.GAS"),
 					withCapability("coin.TRANSFER")
-				]
-			)
-			
+				])
 			const signedCommand = await signTransaction(transaction)
+			
 			if (isSignedCommand(signedCommand)) {
 				const url = ""; // this will be the local url for devnet and should pass in below
 				const requestKey = await submitCommand(signedCommand)
-				console.log(requestKey)
 				saveToRequestKeyLocalStorage(requestKey, 'fund')
-				pollPendingRequests()
-				
+				pollPendingRequests().then(()=> null)
 				return { requestKey }
 			}
 		} catch (err) {
