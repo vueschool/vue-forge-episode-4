@@ -144,7 +144,8 @@ const submitForm = async () => {
   // If the user reloads the page, we should check if the request key is
   // present in local storage, if so, we should start listening to the
   // request key again.
-  const startsAt = new Date(new Date(form.startsAt).setHours(15)).toISOString();
+
+  const startsAt = getExactStartTimeFromDateField(form.startsAt);
 
   if (!softCapAsKda.value || !hardCapAsKda.value) {
     throw createError(
@@ -243,7 +244,7 @@ const submitForm = async () => {
             step="5000"
             v-model.number="form.softCap"
             hint="Soft cap is the minimum amount of money that you need to raise
-                in order to start your project."
+                in order to start your project. USD amount is approximate. Will be capped in KDA at current market value"
           >
             <template #label-text-alt>
               <Money :amount="form.softCap" />
@@ -277,7 +278,7 @@ const submitForm = async () => {
             step="5000"
             v-model.number="form.hardCap"
             hint="Hard cap is the maximum amount of money that you need to raise
-                in order to start your project."
+                in order to start your project. USD amount is approximate. Will be capped in KDA at current market value"
           >
             <template #label-text-alt>
               <Money :amount="form.hardCap" />
