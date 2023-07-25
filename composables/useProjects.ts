@@ -55,19 +55,21 @@ export const useProjects = () => {
 
     return newProject;
   };
-  
-  const updateStatusForRequestKey = async (requestKey: string, data: Partial<ProjectT>): Promise<ProjectT> => {
+
+  const updateStatusForRequestKey = async (
+    requestKey: string,
+    data: Partial<ProjectT>
+  ): Promise<ProjectT> => {
     const { data: project, error } = await supabase
       .from("projects")
       .update(data as ProjectT)
       .eq('requestKey' , requestKey as string )
       .single()
 
-    console.log(error, data)
     if (error) {
       throw new Error(error?.message || "Error updating project");
     }
-    
+
     return project;
   };
 
