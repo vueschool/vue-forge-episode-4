@@ -169,6 +169,7 @@ export const usePact = async () => {
 				const url = ""; // this will be the local url for devnet and should pass in below
 				const requestKey = await submitCommand(signedCommand)
 				saveToRequestKeyLocalStorage(requestKey)
+				pollPendingRequests()
 				return { requestKey }
 			}
 		} catch (err) {

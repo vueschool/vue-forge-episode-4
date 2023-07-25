@@ -61,7 +61,7 @@ export const useProjects = () => {
       .from("projects")
       .update(data as ProjectT)
       .eq('requestKey' , requestKey as string )
-      // .match({'requestKey':  requestKey as string })
+      .single()
 
     console.log(error, data)
     if (error) {
