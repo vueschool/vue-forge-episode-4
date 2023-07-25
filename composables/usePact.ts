@@ -140,13 +140,13 @@ export const usePact = async () => {
 		name: string;
 		startsAt: string;
 		finishesAt: string;
-		hardCap: number;
-		softCap: number;
+		hardCap: string;
+		softCap: string;
 	}
 	
 	type TFundForm = {
 		id: string;
-		amount: number;
+		amount: string;
 	}
 	
 	

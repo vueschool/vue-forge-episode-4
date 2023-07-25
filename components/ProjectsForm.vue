@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { watchDebounced } from "@vueuse/core";
-import { nanoid } from 'nanoid'
+import { nanoid } from "nanoid";
 import { CategoryT, UuidT } from "~/types";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as zod from "zod";
@@ -52,7 +52,7 @@ const validationSchema = toTypedSchema(
 // Set initial form values
 // and keep up with form state
 const form = reactive({
-	projectId: nanoid(),
+  projectId: nanoid(),
   title: "",
   description: "",
   image: "",
@@ -97,77 +97,85 @@ const startsAt = computed(() => {
 });
 
 const isFinishDateBeforeStartDate = computed(() => {
-	return (
-		finishesAt.value &&
-		startsAt.value &&
-		finishesAt.value.getTime() < startsAt.value.getTime()
-	)
-})
-
-const errors = reactive<Record<string, string | null>>({
-	title: null,
-	description: null,
-	image: null,
-	categoryUuid: null,
-	finishesAt: null,
-	softCap: null,
-	hardCap: null,
-	startsAt: null,
+  return (
+    finishesAt.value &&
+    startsAt.value &&
+    finishesAt.value.getTime() < startsAt.value.getTime()
+  );
 });
 
+const errors = reactive<Record<string, string | null>>({
+  title: null,
+  description: null,
+  image: null,
+  categoryUuid: null,
+  finishesAt: null,
+  softCap: null,
+  hardCap: null,
+  startsAt: null,
+});
 
 const validateFinishDateIsAfterStartDate = async () => {
-	if (isFinishDateBeforeStartDate.value) {
-		errors.finishesAt = "Finish date must be after start date"
-	} else {
-		errors.finishesAt = null
-	}
-}
+  if (isFinishDateBeforeStartDate.value) {
+    errors.finishesAt = "Finish date must be after start date";
+  } else {
+    errors.finishesAt = null;
+  }
+};
 
+watchDebounced([startsAt, finishesAt], validateFinishDateIsAfterStartDate, {
+  debounce: 500,
+  maxWait: 1000,
+});
 
-watchDebounced(
-	[startsAt, finishesAt],
-	validateFinishDateIsAfterStartDate,
-	{ debounce: 500, maxWait: 1000 }
-);
+const softCap = computed(() => form.softCap);
+const hardCap = computed(() => form.hardCap);
+const { asKda: softCapAsKda } = useKdaUsd(softCap, "usd");
+const { asKda: hardCapAsKda } = useKdaUsd(hardCap, "usd");
 
-const { create: createOnBlockchain } = await usePact()
+const { create: createOnBlockchain } = await usePact();
 const submitForm = async () => {
-	// The result is the request Key, we should save it in local storage
-	// start listening to the request key and create the project on the WEB2.0
-	// backend, setting the status to pending.
-	// Listening is a long term process, once listening is done, we should
-	// update the status to success or error.
-	
-	// If the user reloads the page, we should check if the request key is
-	// present in local storage, if so, we should start listening to the
-	// request key again.
-	const startsAt = new Date((new Date(form.startsAt)).setHours(15)).toISOString()
-	console.log(form, startsAt)
-	const { requestKey } = await createOnBlockchain({
-		id: form.projectId,
-		name: form.title,
-		startsAt: startsAt, // form.startsAt,
-		finishesAt: form.finishesAt,
-		softCap: form.softCap,
-		hardCap: form.hardCap,
-	})
-	
-	if (requestKey) {
-		const newForm = await createProjectInDB({
-			...form,
-			hardCap: form.hardCap.toString(),
-			softCap: form.softCap.toString(),
-			excerpt: `${form.description.substring(0, 130)} ...`,
-			image: form.image || "https://placehold.co/500x320",
-			requestKey,
-		});
-		
-		useAlerts().success("Project created");
-		navigateTo(`/projects/${newForm.uuid}`);
-	} else {
-		useAlerts().error("There was an error creating your project!");
-	}
+  // The result is the request Key, we should save it in local storage
+  // start listening to the request key and create the project on the WEB2.0
+  // backend, setting the status to pending.
+  // Listening is a long term process, once listening is done, we should
+  // update the status to success or error.
+
+  // If the user reloads the page, we should check if the request key is
+  // present in local storage, if so, we should start listening to the
+  // request key again.
+  const startsAt = new Date(new Date(form.startsAt).setHours(15)).toISOString();
+
+  if (!softCapAsKda.value || !hardCapAsKda.value) {
+    throw createError(
+      "There was an error converting the soft and hard caps to KDA"
+    );
+  }
+
+  const { requestKey } = await createOnBlockchain({
+    id: form.projectId,
+    name: form.title,
+    startsAt: startsAt, // form.startsAt,
+    finishesAt: form.finishesAt,
+    softCap: softCapAsKda.value?.toString(),
+    hardCap: hardCapAsKda.value?.toString(),
+  });
+
+  if (requestKey) {
+    const newForm = await createProjectInDB({
+      ...form,
+      hardCap: form.hardCap.toString(),
+      softCap: form.softCap.toString(),
+      excerpt: `${form.description.substring(0, 130)} ...`,
+      image: form.image || "https://placehold.co/500x320",
+      requestKey,
+    });
+
+    useAlerts().success("Project created");
+    navigateTo(`/projects/${newForm.uuid}`);
+  } else {
+    useAlerts().error("There was an error creating your project!");
+  }
 };
 </script>
 
@@ -309,7 +317,9 @@ const submitForm = async () => {
             hint="This is the date that your project will stop receiving funds."
           />
 
-          <button type="submit" class="w-full btn btn-primary">Publish your project</button>
+          <button type="submit" class="w-full btn btn-primary">
+            Publish your project
+          </button>
         </div>
       </Form>
       <div class="h-full col-span-4">
