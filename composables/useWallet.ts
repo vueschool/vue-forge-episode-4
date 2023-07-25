@@ -1,4 +1,5 @@
 import { getClient, IPactCommand, Pact } from '@kadena/client'
+
 import { Ref } from 'vue'
 
 const initialized = ref(false)
@@ -96,6 +97,59 @@ export function useWallet () {
 		return
 	}
 	
+	const sign = async (parsedTransaction: any) => {
+		console.log(parsedTransaction)
+		const signingRequest: any = {
+			code: parsedTransaction.payload.exec.code ?? '',
+			data: parsedTransaction.payload.exec.data as { [key: string]: unknown },
+			caps: parsedTransaction.signers.flatMap((signer) => {
+				if (signer.clist === undefined) {
+					return [];
+				}
+				return signer.clist.map(({ name, args }) => {
+					const nameArr = name.split('.');
+
+					return {
+						role: nameArr[nameArr.length - 1],
+						description: `Description for ${name}`,
+						cap: {
+							name,
+							args,
+						},
+					};
+				});
+			}),
+			nonce: parsedTransaction.nonce,
+			chainId: parsedTransaction.meta.chainId,
+			gasLimit: parsedTransaction.meta.gasLimit,
+			gasPrice: parsedTransaction.meta.gasPrice,
+			sender: parsedTransaction.meta.sender,
+			ttl: parsedTransaction.meta.ttl,
+		};
+		// console.log(signingRequest)
+		console.log(parsedTransaction)
+		try {
+			const response = await instance.value?.request({
+				method: 'kda_requestQuickSign',
+				data: {
+					networkId: networkId.value,
+					signingCmd: signingRequest,
+					// cmdSigDatas: [
+					// 	{
+					// 		sigs: [],
+					// 		cmd: parsedTransaction,
+					// 	}]
+				}
+			});
+			
+			return response?.signedCmd
+		} catch (e) {
+			console.log(e)
+		}
+		
+	}
+	
+	
 	watch(account, async (value) => {
 		console.log('account watcher', value)
 		if (value) {
@@ -107,6 +161,7 @@ export function useWallet () {
 	
 	return {
 		initialize,
+		sign,
 		connect,
 		disconnect,
 		requestAccount,
