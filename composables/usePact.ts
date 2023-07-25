@@ -8,7 +8,10 @@ import {
 	Pact,
 	readKeyset
 } from '@kadena/client'
+import { ExtractType } from '@kadena/client/lib/commandBuilder/commandBuilder'
+import { ICapabilityItem } from '@kadena/client/lib/interfaces/IPactCommand'
 import { PactNumber } from '@kadena/pactjs'
+import Client from '@walletconnect/sign-client'
 import SignClient from '@walletconnect/sign-client'
 import { SessionTypes } from '@walletconnect/types'
 import { nanoid } from 'nanoid'
@@ -17,9 +20,9 @@ import { RemovableRef, useStorage } from '@vueuse/core'
 const kadenaClient = getClient();
 const { chain, networkId, isConnected, publicKey } = useWallet()
 export const usePact = async () => {
+	const { signTransaction, connect } = useWallet()
 	const pendingRequestsKeys: RemovableRef<Record<string, {requestKey: string, type: string}>> = useStorage("pendingRequestsKeys", {});
 	
-	const { client, session, connect, pairings } = await useWalletConnect();
 	type Key = string
 	type Account = `${'k' | 'w'}:${string}` | string
 	const keyFromAccount = (account: Account): string => {
@@ -98,7 +101,7 @@ export const usePact = async () => {
 		}
 	}
 	
-	const createTransaction = (executionObject: any, keyset: string, sender: Sender, options?: TTransactionOptions) => {
+	const createTransaction = (executionObject: any, keyset: string, sender: Sender, options?: TTransactionOptions, capabilities?:  (withCapability: ExtractType<TCommand>) => ICapabilityItem[]) => {
 		const {chain: chainId, networkId} = _getOptions(options);
 
 		return Pact.builder
@@ -106,7 +109,7 @@ export const usePact = async () => {
 			.addKeyset(keyset, "keys-all", sender.publicKey)
 			.setNetworkId(networkId) //fast-development - https://github.com/kadena-community/crowdfund
 			.setMeta({ chainId, sender: sender.account, })
-			.addSigner(sender.publicKey)
+			.addSigner(sender.publicKey, capabilities)
 			.createTransaction();
 	}
 	
@@ -145,18 +148,15 @@ export const usePact = async () => {
 	type TFundForm = {
 		id: string;
 		amount: number;
-		funder: string;
 	}
 	
 	
 	const create = async (form: TProjectForm): Promise<{requestKey: string | null}>  => {
 		console.log(form)
-		
+		await connect()
 		try {
 			if (!publicKey.value) throw new Error("Public key required to build transaction");
-			if (!client.value)
-				throw new Error("wallet connect client required to build transaction");
-			
+	
 			const sender = createSenderObject(publicKey.value);
 			// this is from the wallet
 			const keyset = 'ks'
@@ -176,14 +176,12 @@ export const usePact = async () => {
 				keyset,
 				sender,
 			)
-			const { signTransaction, connect } = useWallet()
-			await connect()
 			
 			const signedCommand = await signTransaction(transaction)
 			if (isSignedCommand(signedCommand)) {
 				const url = ""; // this will be the local url for devnet and should pass in below
 				const requestKey = await submitCommand(signedCommand)
-				saveToRequestKeyLocalStorage(requestKey)
+				saveToRequestKeyLocalStorage(requestKey, 'create')
 				pollPendingRequests()
 				return { requestKey }
 			}
@@ -196,11 +194,10 @@ export const usePact = async () => {
 	};
 	
 	const fund = async (form: TFundForm): Promise<{requestKey: string | null}>  => {
+		await connect()
 		try {
 			if(!publicKey.value) throw new Error("Public key required to build transaction");
-			if (!client.value)
-				throw new Error("wallet connect client required to build transaction");
-		
+	
 			const sender = createSenderObject(publicKey.value);
 			// this is from the wallet
 			const keyset = 'ks'
@@ -213,16 +210,20 @@ export const usePact = async () => {
 				}),
 				keyset,
 				sender,
+				{},
+				(withCapability)=>[
+					withCapability("coin.GAS"),
+					withCapability("coin.TRANSFER")
+				]
 			)
-			const { signTransaction, connect } = useWallet()
-			await connect()
 			
 			const signedCommand = await signTransaction(transaction)
 			if (isSignedCommand(signedCommand)) {
 				const url = ""; // this will be the local url for devnet and should pass in below
 				const requestKey = await submitCommand(signedCommand)
 				console.log(requestKey)
-				saveToRequestKeyLocalStorage(requestKey)
+				saveToRequestKeyLocalStorage(requestKey, 'fund')
+				pollPendingRequests()
 				
 				return { requestKey }
 			}
@@ -234,7 +235,7 @@ export const usePact = async () => {
 		return { requestKey: null }
 	};
 	
-	const saveToRequestKeyLocalStorage = (requestKey: string, type: 'create') => {
+	const saveToRequestKeyLocalStorage = (requestKey: string, type: 'create' | 'fund') => {
 		const currentRequestKeys: Record<string, {requestKey: string, type: string}> = pendingRequestsKeys.value
 		currentRequestKeys[requestKey] = { requestKey, type }
 		pendingRequestsKeys.value = currentRequestKeys
@@ -286,7 +287,6 @@ export const usePact = async () => {
 				chainId: chain.value, // instruct everyone to use chain 0 on devnet
 			})
 			.createTransaction()
-		// const response = await  client.preflight(transaction)
 		const response = await kadenaClient.dirtyRead(transaction)
 		console.log('response',response)
 		

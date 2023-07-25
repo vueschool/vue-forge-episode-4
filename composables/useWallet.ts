@@ -104,8 +104,6 @@ export function useWallet () {
 	}
 	
 	const signTransaction = async (transaction: any): Promise<ICommand> => {
-		console.log(transaction)
-		
 		const response = await instance.value?.request({
 			method: 'kda_requestQuickSign',
 			data: {
@@ -114,7 +112,7 @@ export function useWallet () {
 				commandSigDatas: [
 					{
 						sigs: [{
-							pubKey: '6c63dda2d4b2b6d1d10537484d7279619283371b3ba62957a773676369944b17',
+							pubKey: publicKey.value,
 							sig: undefined
 						}],
 						cmd: transaction.cmd
@@ -131,11 +129,9 @@ export function useWallet () {
 			sigs: response?.quickSignData?.[0]?.commandSigData?.sigs,
 			hash: response?.quickSignData?.[0]?.outcome?.hash
 		}
-		
 	}
 	
 	watch(account, async (value) => {
-		console.log('account watcher', value)
 		if (value) {
 			await getBalance()
 		}
@@ -149,14 +145,12 @@ export function useWallet () {
 	
 	
 	return {
-		initialize,
-		signTransaction,
 		connect,
 		disconnect,
-		requestAccount,
 		checkStatus,
-		checkIdWalletIsInstalled,
-		getBalance,
+		
+		signTransaction,
+		
 		balance: computed(() => balance.value),
 		initialized: computed(() => initialized.value),
 		isConnected,

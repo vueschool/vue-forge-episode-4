@@ -7,14 +7,18 @@ const amount = ref("");
 async function handlePledge() {
   if (!amount.value) return;
 	
-	await fund({
+	const {requestKey} = await fund({
 		id: props.projectId,
-		amount: amount.value,
+		amount: parseInt(amount.value),
 	})
-  // send pledge amount to blockchain
-  useAlerts().success("This is a placeholder, right now nothing is happening", {
-    title: "Thanks for pledging!",
-  });
+	
+	if (requestKey) {
+		// send pledge amount to blockchain
+		useAlerts().success("This is a placeholder, right now nothing is happening", {
+			title: "Thanks for pledging!",
+		});
+	}
+ 
 }
 </script>
 <template>

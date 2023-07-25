@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const{ balance, getBalance, isConnected, checkStatus, connect } = useWallet()
+const{ balance, isConnected, checkStatus, connect } = useWallet()
 onMounted(async () => await checkStatus())
 
 </script>

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ICommandResult } from '@kadena/client'
-import { ICommand } from '@kadena/types'
 import { useProjects } from "~/composables/useProjects";
 type ProjectProps = {
   uuid: string;
@@ -9,6 +7,7 @@ type TBlockchainStatus = {
 	status: {
 		int: number;
 	}
+	'project-owner'?: string
 	projectId?: string
 	hardCap: number
 	softCap: number
@@ -17,6 +16,7 @@ type TBlockchainStatus = {
 
 const props = defineProps<ProjectProps>();
 const blockchainStatus = ref<TBlockchainStatus>({
+	'project-owner': undefined,
 	projectId: undefined,
 	status: {
 		int: 0
@@ -28,6 +28,28 @@ const blockchainStatus = ref<TBlockchainStatus>({
 const { item: project, fetchOne } = useProjects();
 await useAsyncData("fetch-project", () => fetchOne({ uuid: props.uuid }));
 const { getProjectStatus } = await usePact()
+
+const status = computed(() => {
+	const states = {
+		0: "CREATED",
+		1: "CANCELLED",
+		2: "SUCCEEDED",
+		3: "FAILED",
+		4: "PENDING",
+		5: "ACTIVE"
+	}
+	
+	// if (project.status === 'pending') return states[4]
+	if (blockchainStatus.value?.status.int === 0) {
+		return states[5]
+	}
+	
+	return states[blockchainStatus.value?.status?.int || 0]
+})
+const { account } = useWallet()
+const isProjectOwner = computed(() => {
+	return blockchainStatus.value?.['project-owner'] === account.value
+})
 
 watch(() => project.value, async (value) => {
 	if (value.projectId) {
@@ -61,6 +83,15 @@ const showPledgeForm = ref(false);
         <div
           class="relative flex flex-col items-center justify-start w-full h-full px-8 space-y-4"
         >
+	        <div v-if="isProjectOwner" class="w-full flex flex-col items-center justify-between space-y-4">
+		        <div class="w-full">
+			        <button class="btn w-full btn-error">Cancel Project</button>
+		        </div>
+		        <div class="w-full flex items-center justify-between space-x-4">
+			        <button class="btn btn-primary flex-1">Succeed Project</button>
+			        <button class="btn btn-warning flex-1">Fail Project</button>
+		        </div>
+	        </div>
 	        <div class="w-full">
             <progress
               class="w-full progress progress-primary"
@@ -104,7 +135,7 @@ const showPledgeForm = ref(false);
 	        <div class="w-full">
             <span
 	            class="text-xl text-warning uppercase"
-	            v-if="project.status"
+	            v-if="status === 'PENDING'"
             >
 	            This Project is still in "PENDING" state, please check back later.
             </span>
@@ -112,8 +143,8 @@ const showPledgeForm = ref(false);
           <div
             class="inset-x-0 bottom-0 flex flex-col items-center justify-center w-full px-8 space-y-4 text-center"
           >
-            <div v-if="!showPledgeForm" @click="showPledgeForm = true">
-              <button disabled="project.status !== 'active'" class="btn btn-primary">Fund this Project</button>
+            <div v-if="!showPledgeForm">
+              <button :disabled="status !== 'ACTIVE'"  @click="showPledgeForm = true" class="btn btn-primary">Fund this Project</button>
               <br />
               <span class="text-xs text-gray-400">
                 All or nothing, this project will only be funded if it reaches

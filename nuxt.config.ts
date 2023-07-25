@@ -9,19 +9,9 @@ export default defineNuxtConfig({
     "@vee-validate/nuxt",
     "nuxt-proxy",
   ],
-  runtimeConfig: {
-    public: {
-      WALLET_CONNECT_PROJECT_ID: "",
-      WALLET_CONNECT_RELAY_URL: "",
-    },
-  },
   colorMode: {
     preference: "cupcake", // default theme
     dataValue: "theme", // activate data-theme in <html> tag
-  },
-
-  routeRules: {
-    "connect-wallet": { ssr: false },
   },
 
   vue: {
