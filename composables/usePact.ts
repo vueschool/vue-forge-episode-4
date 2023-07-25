@@ -15,9 +15,9 @@ import { nanoid } from 'nanoid'
 import { RemovableRef, useStorage } from '@vueuse/core'
 
 const kadenaClient = getClient();
-const { chain, networkId } = useWallet()
+const { chain, networkId, isConnected, publicKey } = useWallet()
 export const usePact = async () => {
-	const pendingRequestsKeys: RemovableRef<any[]> = useStorage("pendingRequestsKeys", []);
+	const pendingRequestsKeys: RemovableRef<Record<string, {requestKey: string, type: string}>> = useStorage("pendingRequestsKeys", {});
 	
 	const { client, session, connect, pairings } = await useWalletConnect();
 	type Key = string
@@ -31,6 +31,11 @@ export const usePact = async () => {
 		publicKey: Key;
 	}
 	
+	type TFund = {
+		projectId: string;
+		funder: string;
+		amount: number;
+	}
 	type TProject = {
 		id: string;
 		name: string;
@@ -53,7 +58,7 @@ export const usePact = async () => {
 		softCap,
 		keyset
 	}: TProject) => {
-		return Pact.modules['free.crowdfund']["create-project"](
+		const cmd =  Pact.modules['free.crowdfund']["create-project"](
 			id,
 			name,
 			literal('coin'),
@@ -64,10 +69,26 @@ export const usePact = async () => {
 			sender.account,
 			readKeyset(keyset)
 		)
+		
+		console.log(cmd)
+		return cmd
 	}
 	type TTransactionOptions = {
 		networkId?: string;
 		chain?: IPactCommand['meta']['chainId'];
+	}
+	
+	
+	const createFundObject = ({
+		projectId,
+		funder,
+		amount
+	}: TFund) => {
+		return Pact.modules['free.crowdfund']["fund-project"](
+			projectId,
+			funder,
+			new PactNumber(amount).toPactDecimal()
+		)
 	}
 	
 	const _getOptions = (options?: TTransactionOptions | TSignTransactionOptions) => {
@@ -100,21 +121,9 @@ export const usePact = async () => {
 		chain?: IPactCommand['meta']['chainId'];
 	}
 	
-	const signTransaction = async (transaction: any, options?: TSignTransactionOptions ) => {
-		const { networkId} = _getOptions(options);
-		const signWithWalletConnect = createWalletConnectQuicksign(
-			client.value as SignClient,
-			session.value as SessionTypes.Struct,
-			`kadena:${networkId}`,
-		);
-
-		return await signWithWalletConnect(transaction);
-	}
-	
 	const submitCommand = async (signedTransaction: any) => {
 		return await kadenaClient.submit(signedTransaction);
 	}
-	
 	
 	const listen = async (requestKey: string): Promise<ICommandResult> => {
 		return await kadenaClient.listen(requestKey, { networkId: networkId.value, chainId: chain.value });
@@ -133,18 +142,24 @@ export const usePact = async () => {
 		softCap: number;
 	}
 	
+	type TFundForm = {
+		id: string;
+		amount: number;
+		funder: string;
+	}
+	
 	
 	const create = async (form: TProjectForm): Promise<{requestKey: string | null}>  => {
+		console.log(form)
+		
 		try {
-			const publicKey = `6c63dda2d4b2b6d1d10537484d7279619283371b3ba62957a773676369944b17`;
-			const sender = createSenderObject(publicKey);
-			// this is from the wallet
-			const keyset = 'ks'
-			
-			if (!publicKey) throw new Error("Public key required to build transaction");
+			if (!publicKey.value) throw new Error("Public key required to build transaction");
 			if (!client.value)
 				throw new Error("wallet connect client required to build transaction");
 			
+			const sender = createSenderObject(publicKey.value);
+			// this is from the wallet
+			const keyset = 'ks'
 			const transaction = createTransaction(
 				createProjectObject({
 					id: form.id,
@@ -180,27 +195,71 @@ export const usePact = async () => {
 		return { requestKey: null }
 	};
 	
-	const saveToRequestKeyLocalStorage = (requestKey: string) => {
-		const currentRequestKeys = new Set(pendingRequestsKeys.value)
-		currentRequestKeys.add(requestKey)
-		pendingRequestsKeys.value = [...currentRequestKeys]
+	const fund = async (form: TFundForm): Promise<{requestKey: string | null}>  => {
+		try {
+			if(!publicKey.value) throw new Error("Public key required to build transaction");
+			if (!client.value)
+				throw new Error("wallet connect client required to build transaction");
+		
+			const sender = createSenderObject(publicKey.value);
+			// this is from the wallet
+			const keyset = 'ks'
+	
+			const transaction = createTransaction(
+				createFundObject({
+					projectId: form.id,
+					funder: sender.account,
+					amount: form.amount,
+				}),
+				keyset,
+				sender,
+			)
+			const { signTransaction, connect } = useWallet()
+			await connect()
+			
+			const signedCommand = await signTransaction(transaction)
+			if (isSignedCommand(signedCommand)) {
+				const url = ""; // this will be the local url for devnet and should pass in below
+				const requestKey = await submitCommand(signedCommand)
+				console.log(requestKey)
+				saveToRequestKeyLocalStorage(requestKey)
+				
+				return { requestKey }
+			}
+		} catch (err) {
+			console.log(err);
+			// alert there was an error submitting to blockchain
+		}
+		
+		return { requestKey: null }
+	};
+	
+	const saveToRequestKeyLocalStorage = (requestKey: string, type: 'create') => {
+		const currentRequestKeys: Record<string, {requestKey: string, type: string}> = pendingRequestsKeys.value
+		currentRequestKeys[requestKey] = { requestKey, type }
+		pendingRequestsKeys.value = currentRequestKeys
 	}
 	
-	const getPendingRequests = () => {
-		return pendingRequestsKeys.value
-	}
 	
-	const updatePendingRequestStatus = (pendingRequest: ICommandResult) => {
+	const updatePendingRequestStatus = (pendingRequest: ICommandResult, pending : {requestKey: string, type: string}) => {
 		const { updateStatusForRequestKey } = useProjects()
-		console.log('pendingRequest', pendingRequest , pendingRequest.result, pendingRequest.reqKey,)
 		// 	// update project status on DB with response from blockchain
 		if (pendingRequest.result.status === "success") {
-					const response = updateStatusForRequestKey(pendingRequest.reqKey, { status: "created" })
+					let data = {}
+					// If the pending request is a create project
+					if (pending.type === 'create') {
+						data = { status: "created" }
+					}
+					// If the pending request is a fund project
+					if (pending.type === 'fund') {
+						// Add +1 Backer
+						data = { backers : 1 }
+					}
+					const response = updateStatusForRequestKey(pendingRequest.reqKey, data)
 					console.log("success", response);
 					// data has been stored in the blockchain
 					// we can connect it with the data in the database
 					// remove from pending requests
-
 				} else {
 					console.log("nope");
 					// there was an error alert
@@ -210,18 +269,17 @@ export const usePact = async () => {
 	
 	const pollPendingRequests = async () => {
 		if (kadenaClient) {
-			for (const requestKey of Object.values(pendingRequestsKeys.value)) {
-				const response = await listen(requestKey)
-				updatePendingRequestStatus(response)
+			for (const pending of Object.values(pendingRequestsKeys.value)) {
+				const response = await listen(pending.requestKey)
+				updatePendingRequestStatus(response, pending)
 			}
 		}
 	}
 	
-	
 	const getProjectStatus = async (uuid: string) => {
 		const transaction = Pact.builder
 			.execution(
-				Pact.modules['free.crowdfund']["read-project-fundstate"](uuid)
+				Pact.modules['free.crowdfund']["read-project"](uuid)
 			)
 			.setNetworkId(networkId.value) //fast-development - https://github.com/kadena-community/crowdfund
 			.setMeta({
@@ -235,15 +293,9 @@ export const usePact = async () => {
 		return response
 	}
 	
-	
-	// watch(pendingRequestsKeys, async (value) => {
-	// 	if (value.length) {
-	// 		await pollPendingRequests()
-	// 	}
-	// }, {deep: true})
-	
 	return {
 		create,
+		fund,
 		pollPendingRequests,
 		getProjectStatus,
 		listen

@@ -42,9 +42,9 @@ const user = useSupabaseUser();
           Login
         </NuxtLink>
         <div class="dropdown dropdown-end" v-if="user">
-          <div tabindex="0" class="btn btn-ghost btn-circle avatar">
+          <div tabindex="0" class="btn btn-ghost btn-circle avatar relative z-10">
             <div
-              class="w-10 text-lg leading-10 text-white rounded-full bg-secondary"
+              class="w-10 text-lg leading-10 text-white rounded-full bg-secondary border border-white"
             >
               <span>{{ user?.email?.substring(0, 1) }}</span>
             </div>
@@ -62,7 +62,7 @@ const user = useSupabaseUser();
             <li><NuxtLink :to="{ name: 'logout' }">Logout</NuxtLink></li>
           </ul>
         </div>
-	      <Balance />
+	      <Balance v-if="user"/>
       </div>
     </div>
   </div>

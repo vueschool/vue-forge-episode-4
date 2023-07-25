@@ -9,6 +9,7 @@ type TBlockchainStatus = {
 	status: {
 		int: number;
 	}
+	projectId?: string
 	hardCap: number
 	softCap: number
 	raised: number
@@ -16,6 +17,7 @@ type TBlockchainStatus = {
 
 const props = defineProps<ProjectProps>();
 const blockchainStatus = ref<TBlockchainStatus>({
+	projectId: undefined,
 	status: {
 		int: 0
 	},
@@ -121,7 +123,7 @@ const showPledgeForm = ref(false);
                 </ClientOnly>
               </span>
             </div>
-            <ProjectPledgeForm v-if="showPledgeForm" />
+            <ProjectPledgeForm :projectId="project.projectId" v-if="showPledgeForm" />
           </div>
         </div>
       </div>

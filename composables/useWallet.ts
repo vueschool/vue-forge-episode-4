@@ -8,10 +8,11 @@ const balance = ref<Ref<string | null>>(null)
 const networkId = ref('testnet04')
 const chain = ref<Ref<IPactCommand['meta']['chainId']>>('0')
 const instance = ref(null)
-const publicKey = ref(null)
-const account = ref('')
-const connectedSites = ref([])
+const publicKey = ref<null|string>(null)
+const account = ref<null|string>('')
+const connectedSites = ref<any[]>([])
 const isInstalled = ref(false)
+const isConnected = computed(() => account.value && publicKey.value)
 
 export function useWallet () {
 	watch(isInstalled, (value) => {
@@ -36,15 +37,23 @@ export function useWallet () {
 	
 	const connect = async () => {
 		if (isInstalled.value && instance.value) {
-			const { account: accountResponse } = await instance?.value.request({
+			const { account, status } = await instance?.value.request({
 				method: 'kda_connect',
 				networkId: networkId.value
 			})
-			account.value = accountResponse.account
-			publicKey.value = accountResponse.publicKey
-			connectedSites.value = accountResponse.connectedSites
-			return accountResponse
+			
+			if (status === 'success') {
+				await setAccount(account)
+			}
+			
+			return { account, status }
 		}
+	}
+	
+	const setAccount  = (data: { account: string | null, publicKey: string | null, connectedSites: any[] }) => {
+		account.value = data.account
+		publicKey.value = data.publicKey
+		connectedSites.value = data.connectedSites
 	}
 	
 	const requestAccount = async () => {
@@ -57,28 +66,23 @@ export function useWallet () {
 	
 	const checkStatus = async () => {
 		if (isInstalled.value && instance.value) {
-			const response = await instance?.value.request({ method: 'kda_checkStatus', networkId: networkId.value })
-			console.log('kda_checkStatus', response)
-			return response
-		}
-	}
-	
-	const testMethod = async () => {
-		const client = getClient()
-		const transaction = Pact.builder
-			.execution((Pact.modules as any).coin['get-balance'](account.value))
-			.setMeta({ sender: account.value, chainId: chain.value })
-			.setNetworkId(networkId.value)
-			.createTransaction()
+			const { account, status } = await instance?.value.request({ method: 'kda_checkStatus', networkId: networkId.value })
+			if (status === 'success') {
+				setAccount(account)
+			}
 		
-		return client.dirtyRead(transaction)
+			return { account, status }
+		}
 	}
 	
 	const disconnect = async () => {
 		if (isInstalled.value && instance.value) {
-			const response = await instance?.value.request({ method: 'kda_disconnect', networkId: networkId.value })
-			console.log('disconnect response', response)
-			return response
+			if (isConnected.value) {
+				const response = await instance?.value.request({ method: 'kda_disconnect', networkId: networkId.value })
+				console.log('disconnect response', response)
+				setAccount({ account: null, publicKey: null, connectedSites: [] })
+				return response
+			}
 		}
 	}
 	
@@ -95,7 +99,8 @@ export function useWallet () {
 			
 			balance.value = data
 		}
-		return
+		
+		return balance.value
 	}
 	
 	const signTransaction = async (transaction: any): Promise<ICommand> => {
@@ -136,7 +141,12 @@ export function useWallet () {
 		}
 	})
 	
-	initialize()
+	initialize().then(() => {
+		instance.value?.on('res_accountChange', (event) => {
+			console.log(event);
+		});
+	})
+	
 	
 	return {
 		initialize,
@@ -149,6 +159,7 @@ export function useWallet () {
 		getBalance,
 		balance: computed(() => balance.value),
 		initialized: computed(() => initialized.value),
+		isConnected,
 		account: computed(() => account.value),
 		publicKey: computed(() => publicKey.value),
 		connectedSites: computed(() => connectedSites.value),

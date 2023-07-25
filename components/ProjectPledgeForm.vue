@@ -1,7 +1,16 @@
 <script setup lang="ts">
+const { fund } = await usePact()
+const props = defineProps<{
+	projectId: string;
+}>();
 const amount = ref("");
-function handlePledge() {
+async function handlePledge() {
   if (!amount.value) return;
+	
+	await fund({
+		id: props.projectId,
+		amount: amount.value,
+	})
   // send pledge amount to blockchain
   useAlerts().success("This is a placeholder, right now nothing is happening", {
     title: "Thanks for pledging!",

@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import { CategoryT, UuidT } from "~/types";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as zod from "zod";
+import { getDateXMinutesFromNow } from '~/utils'
 
 type ProjectProps = {
   uuid?: UuidT | null | undefined;
@@ -59,7 +60,7 @@ const form = reactive({
   categoryUuid: "",
   softCap: 10_000,
   hardCap: 25_000,
-  startsAt: useDateFormat(getDateXDaysFromNow(1), "YYYY-MM-DD").value,
+  startsAt: useDateFormat(getDateXMinutesFromNow(10), "YYYY-MM-DD").value,
   finishesAt: useDateFormat(getDateXMonthsFromNow(6), "YYYY-MM-DD").value,
 });
 
@@ -131,7 +132,7 @@ watchDebounced(
 	{ debounce: 500, maxWait: 1000 }
 );
 
-const { create: createOnBlockchain, listen } = await usePact()
+const { create: createOnBlockchain } = await usePact()
 const submitForm = async () => {
 	// The result is the request Key, we should save it in local storage
 	// start listening to the request key and create the project on the WEB2.0
@@ -142,10 +143,12 @@ const submitForm = async () => {
 	// If the user reloads the page, we should check if the request key is
 	// present in local storage, if so, we should start listening to the
 	// request key again.
+	const startsAt = new Date((new Date(form.startsAt)).setHours(15)).toISOString()
+	console.log(form, startsAt)
 	const { requestKey } = await createOnBlockchain({
 		id: form.projectId,
 		name: form.title,
-		startsAt: form.startsAt,
+		startsAt: startsAt, // form.startsAt,
 		finishesAt: form.finishesAt,
 		softCap: form.softCap,
 		hardCap: form.hardCap,

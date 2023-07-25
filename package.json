@@ -6,6 +6,7 @@
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "dev": "nuxt dev",
+    "generate:kda:types": "npx pactjs contract-generate --contract=free.crowdfund --api=https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/0/pact",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

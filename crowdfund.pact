@@ -9,15 +9,15 @@
   (defschema projects
     projectId:string
     title:string
-    token:string
+    token:module{fungible-v2}
     hardCap:decimal
     softCap:decimal
     raised:decimal
     startDate:time
     endDate:time
     status:integer
-    beneficiary:string
-    beneficiary-guard:guard
+    project-owner:string
+    project-owner-guard:guard
   )
 
   ;define funds schema
@@ -67,8 +67,12 @@
     (enforce-keyset "free.crowdfund-admin")
   )
 
-  (defcap ACCT_GUARD (account:string token:string)
-    (enforce-guard (at 'guard (token::details account)))
+  (defcap ACCT_GUARD (account:string projectId:string)
+    (with-read projects-table projectId {
+        "token":=token:module{fungible-v2}
+      }
+      (enforce-guard (at 'guard (token::details account)))
+    )
   )
 
   (defcap PROJECT_OPEN:bool (projectId:string)
@@ -89,7 +93,7 @@
     (with-read projects-table projectId {
       "startDate":=startDate,
       "status":= status,
-      "token":= token:string
+      "token":= token:module{fungible-v2}
       }
       (let ((funder-guard (at 'guard (token::details from))
       ))
@@ -143,9 +147,9 @@
   (defcap PROJECT_OWNER:bool (projectId)
     @doc "Capability that validates if the user is the owner of the project"
     (with-read projects-table projectId {
-      "beneficiary-guard":=beneficiary-guard
+      "project-owner-guard":=project-owner-guard
       }
-      (enforce-guard beneficiary-guard))
+      (enforce-guard project-owner-guard))
   )
 
   (defcap VAULT_GUARD:bool (project-id:string) true)
@@ -159,13 +163,13 @@
   (defun create-project (
     projectId:string
     title:string
-    token:string
+    token:module{fungible-v2}
     hardCap:decimal
     softCap:decimal
     startDate:time
     endDate:time
-    beneficiary:string
-    beneficiary-guard:guard)
+    project-owner:string
+    project-owner-guard:guard)
     "Adds a project to projects table"
     (enforce (< (curr-time) startDate) "Start Date shouldn't be in the past")
     (enforce (< startDate endDate) "Start Date should be before end date")
@@ -183,8 +187,8 @@
         "startDate":startDate,
         "endDate": endDate,
         "status": CREATED,
-        "beneficiary": beneficiary,
-        "beneficiary-guard": beneficiary-guard
+        "project-owner": project-owner,
+        "project-owner-guard": project-owner-guard
         })
   )
 
@@ -204,14 +208,14 @@
         })
         (with-read projects-table projectId {
           "raised":= raised,
-          "token":= token:string,
-          "beneficiary":= beneficiary,
-          "beneficiary-guard":= beneficiary-guard
+          "token":= token:module{fungible-v2},
+          "project-owner":= project-owner,
+          "project-owner-guard":= project-owner-guard
           }
 
           (with-capability (VAULT_GUARD projectId)
-            (install-capability (token::TRANSFER (vault-account projectId) beneficiary raised))
-            (token::transfer-create (vault-account projectId) beneficiary beneficiary-guard raised)
+            (install-capability (token::TRANSFER (vault-account projectId) project-owner raised))
+            (token::transfer-create (vault-account projectId) project-owner project-owner-guard raised)
           )
         )
       )
@@ -281,10 +285,10 @@
       (with-read projects-table projectId {
         "raised":= raised,
         "hardCap":= hardCap,
-        "token":= token:string
+        "token":= token:module{fungible-v2}
         }
         (with-capability (PROJECT_OPEN projectId)
-          (with-capability (ACCT_GUARD funder token)
+          (with-capability (ACCT_GUARD funder projectId)
             (let*
               (
                 (remainingProjectCap (- hardCap raised))
@@ -304,9 +308,9 @@
     (with-capability (DECREASE_RAISE)
       (with-capability (REFUND projectId funder)
         (with-read projects-table projectId {
-          "token":= token:string
+          "token":= token:module{fungible-v2}
           }
-          (with-capability (ACCT_GUARD funder token)
+          (with-capability (ACCT_GUARD funder projectId)
             (with-read funds-table (get-fund-key projectId funder) {
               "amount":= amount,
               "status":= status
@@ -315,7 +319,6 @@
 
               (cancel-fund projectId funder)
               (decrease-project-raise projectId amount)
-
 
                 (with-capability (VAULT_GUARD projectId)
                   (install-capability (token::TRANSFER (vault-account projectId) funder amount))
@@ -344,15 +347,8 @@
     )
   )
 
-  (defun read-project-fundstate (projectId)
-    (with-read projects-table projectId {
-      "raised":= raised,
-      "hardCap":= hardCap,
-      "softCap":= softCap,
-      "status":= status
-      }
-      { "raised": raised, "hardCap": hardCap, "softCap": softCap, "status": status }
-    )
+  (defun read-project (projectId)
+    (read projects-table projectId)
   )
 
   (defun read-projects:list ()
