@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
+  ssr: false,
   modules: [
     "@nuxtjs/tailwindcss",
     "@nuxtjs/color-mode",
@@ -12,12 +13,6 @@ export default defineNuxtConfig({
   colorMode: {
     preference: "cupcake", // default theme
     dataValue: "theme", // activate data-theme in <html> tag
-  },
-
-  vue: {
-    compilerOptions: {
-      isCustomElement: (tag) => ["w3m-core-button"].includes(tag),
-    },
   },
   proxy: {
     options: {
