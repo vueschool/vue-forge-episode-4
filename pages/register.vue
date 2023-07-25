@@ -27,7 +27,7 @@ async function signUp() {
     });
   } else {
     useAlerts().success("Registration successful");
-    navigateTo({ name: "profile" });
+    navigateTo({ name: "profile", query: { from: "register" } });
   }
 }
 </script>
