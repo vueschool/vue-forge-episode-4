@@ -27,7 +27,7 @@ async function signUp() {
     });
   } else {
     useAlerts().success("Registration successful");
-    navigateTo({ name: "connect-wallet" });
+    navigateTo({ name: "profile", query: { from: "register" } });
   }
 }
 </script>
