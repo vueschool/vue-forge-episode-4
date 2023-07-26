@@ -103,7 +103,7 @@ export function useWallet() {
       // Exercise 1 starts here
       // Use the Kadena Client to get the balance
 
-      balance.value = "100";
+      balance.value = "40";
     }
 
     return balance.value;
