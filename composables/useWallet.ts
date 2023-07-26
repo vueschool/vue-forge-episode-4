@@ -5,7 +5,7 @@ import { Ref } from 'vue'
 
 const initialized = ref(false)
 const balance = ref<Ref<string | null>>(null)
-const networkId = ref('testnet04')
+const networkId = ref('fast-development')
 const chain = ref<Ref<IPactCommand['meta']['chainId']>>('0')
 const instance = ref(null)
 const publicKey = ref<null|string>(null)
@@ -88,15 +88,17 @@ export function useWallet () {
 	
 	const getBalance = async () => {
 		if (account.value) {
-			const client = getClient()
+			const client = getClient(({chainId}) => `http://localhost:8070/chainweb/0.0/fast-development/chain/${chainId}/pact`)
+			// const client = getClient("http://127.0.0.1:8070/chainweb/0.0/fast-development/chain/0/pact")
 			const transaction = Pact.builder
 				.execution((Pact.modules as any).coin['get-balance'](account.value))
 				.setMeta({ sender: account.value, chainId: chain.value })
 				.setNetworkId(networkId.value)
 				.createTransaction()
 			
-			const { result: { data } } = await client.dirtyRead(transaction)
-			
+			const response = await client.dirtyRead(transaction)
+			const { result: { data } } = response
+			console.log(response)
 			balance.value = data
 		}
 		

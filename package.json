@@ -11,7 +11,9 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:reset": "npx supabase db reset && yarn db:types",
-    "db:types": "supabase gen types typescript --local > ./supabase/schema.ts"
+    "db:types": "supabase gen types typescript --local > ./supabase/schema.ts",
+    "kadena:devnet": "docker run -it -p 8070:1337 -v $HOME/.devnet/l1:/root/.devenv enof/devnet",
+    "kadena:cli": "docker run --rm -it -v $(pwd):/app/ --add-host=devnet:host-gateway enof/kda-cli"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.0.2",

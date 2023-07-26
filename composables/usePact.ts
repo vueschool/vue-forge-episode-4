@@ -17,7 +17,7 @@ import { SessionTypes } from '@walletconnect/types'
 import { nanoid } from 'nanoid'
 import { RemovableRef, useStorage } from '@vueuse/core'
 
-const kadenaClient = getClient();
+const kadenaClient = getClient(({chainId}) => `http://localhost:8070/chainweb/0.0/fast-development/chain/${chainId}/pact`)
 const { chain, networkId, isConnected, publicKey } = useWallet()
 export const usePact = async () => {
 	const { signTransaction, connect } = useWallet()
