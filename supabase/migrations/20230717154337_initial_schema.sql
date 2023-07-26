@@ -8,7 +8,6 @@ ALTER TABLE "public"."categories" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY view_categories_policy ON "public"."categories" FOR SELECT
   USING (true);
 
-
 create table "public"."projects" (
     "uuid" uuid not null default gen_random_uuid(),
     "projectId" character varying(255) default NULL,
