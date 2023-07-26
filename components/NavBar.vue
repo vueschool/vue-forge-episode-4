@@ -10,9 +10,9 @@ const user = useSupabaseUser();
   <div class="fixed z-20 w-full bg-primary text-primary-content">
     <div class="flex items-center justify-between mx-auto navbar max-w-7xl">
       <div class="flex-1">
-        <nuxt-link to="/" class="text-xl normal-case btn btn-ghost">{{
-          appName
-        }}</nuxt-link>
+        <nuxt-link to="/" class="text-xl normal-case btn btn-ghost">
+          {{ appName }}
+        </nuxt-link>
       </div>
       <div class="flex-none">
         <ul class="px-1 menu menu-horizontal">
@@ -42,9 +42,12 @@ const user = useSupabaseUser();
           Login
         </NuxtLink>
         <div class="dropdown dropdown-end" v-if="user">
-          <div tabindex="0" class="btn btn-ghost btn-circle avatar">
+          <div
+            tabindex="0"
+            class="relative z-10 btn btn-ghost btn-circle avatar"
+          >
             <div
-              class="w-10 text-lg leading-10 text-white rounded-full bg-secondary"
+              class="w-10 text-lg leading-10 text-white border border-white rounded-full bg-secondary"
             >
               <span>{{ user?.email?.substring(0, 1) }}</span>
             </div>
@@ -62,7 +65,7 @@ const user = useSupabaseUser();
             <li><NuxtLink :to="{ name: 'logout' }">Logout</NuxtLink></li>
           </ul>
         </div>
-        <Balance />
+        <Balance v-if="user" />
       </div>
     </div>
   </div>
