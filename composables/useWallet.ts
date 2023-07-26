@@ -88,7 +88,7 @@ export function useWallet () {
 	
 	const getBalance = async () => {
 		if (account.value) {
-			const client = getClient(({chainId}) => `http://localhost:8070/chainweb/0.0/fast-development/chain/${chainId}/pact`)
+			const client = getClient(({chainId}) => `http://127.0.0.1:8070/chainweb/0.0/fast-development/chain/${chainId}/pact`)
 			// const client = getClient("http://127.0.0.1:8070/chainweb/0.0/fast-development/chain/0/pact")
 			const transaction = Pact.builder
 				.execution((Pact.modules as any).coin['get-balance'](account.value))
