@@ -17,10 +17,10 @@ import { SessionTypes } from '@walletconnect/types'
 import { nanoid } from 'nanoid'
 import { RemovableRef, useStorage } from '@vueuse/core'
 
-const kadenaClient = getClient();
+const kadenaClient = getClient(({chainId}) => `http://127.0.0.1:8070/chainweb/0.0/fast-development/chain/${chainId}/pact`)
 const { chain, networkId, isConnected, publicKey } = useWallet()
 export const usePact = async () => {
-	const { signTransaction, connect } = useWallet()
+	const { signTransaction, connect, networkId, chain } = useWallet()
 	const pendingRequestsKeys: RemovableRef<Record<string, {requestKey: string, type: string}>> = useStorage("pendingRequestsKeys", {});
 	
 	type Key = string
@@ -95,8 +95,8 @@ export const usePact = async () => {
 	
 	const _getOptions = (options?: TTransactionOptions | TSignTransactionOptions) => {
 		return {
-			networkId: options?.networkId || 'testnet04',
-			chain: options?.chain || '0'
+			networkId: options?.networkId || networkId.value,
+			chain: options?.chain || chain.value
 		}
 	}
 	
