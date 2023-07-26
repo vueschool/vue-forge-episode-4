@@ -33,7 +33,7 @@ const fromRegisterPage = useRoute().query.from === "register";
     <div v-else>
       <div v-if="isConnected">
         <div class="flex flex-col items-start justify-start mb-2">
-          <span class="font-bold">Current wallet connected:</span>
+          <span class="font-bold">Wallet Public Key:</span>
           <span>{{ publicKey }}</span>
         </div>
         <div class="flex flex-col items-start justify-start mb-2">

@@ -100,7 +100,10 @@ export function useWallet() {
 
   const getBalance = async () => {
     if (account.value) {
-	    const client = getClient(({chainId}) => `http://127.0.0.1:8070/chainweb/0.0/fast-development/chain/${chainId}/pact`)
+      const client = getClient(
+        ({ chainId }) =>
+          `http://127.0.0.1:8080/chainweb/0.0/fast-development/chain/${chainId}/pact`
+      );
       const transaction = Pact.builder
         .execution((Pact.modules as any).coin["get-balance"](account.value))
         .setMeta({ sender: account.value, chainId: chain.value })
