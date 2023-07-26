@@ -3,7 +3,7 @@ import { ICommand } from "@kadena/types";
 
 const initialized = ref(false);
 const balance = ref<string | null>(null);
-const networkId = ref("testnet04");
+const networkId = ref("fast-development");
 const chain = ref<IPactCommand["meta"]["chainId"]>("0");
 const instance = ref<any>(null);
 const publicKey = ref<null | string>(null);
