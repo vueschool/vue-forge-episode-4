@@ -29,6 +29,15 @@ const classes = computed(() => {
   if (props.as === "textarea") return "textarea textarea-bordered h-64";
   return "input input-bordered";
 });
+const $attrs = useAttrs();
+const fieldAttrs = computed(() => {
+  return {
+    id: props.id,
+    name: props.name,
+    ...$attrs,
+    class: `w-full ${classes.value}`,
+  };
+});
 </script>
 
 <script lang="ts">
@@ -37,7 +46,7 @@ export default {
 };
 </script>
 <template>
-  <div class="w-full max-w-full form-control">
+  <div class="w-full max-w-full mb-4 form-control">
     <label class="label" :for="id">
       <span class="label-text">
         <slot name="label">{{ label }}</slot>
@@ -54,29 +63,16 @@ export default {
 
     <slot name="after-label"></slot>
 
-    <slot name="input">
-      <Field
-        v-if="$slots.default"
-        :id="id"
-        v-model="value"
-        :name="name"
-        v-bind="$attrs"
-        :as="as"
-        class="w-full"
-        :class="classes"
-        ><slot></slot
-      ></Field>
-      <Field
-        v-else
-        :id="id"
-        v-model="value"
-        :name="name"
-        v-bind="$attrs"
-        :as="as"
-        class="w-full"
-        :class="classes"
-      />
-    </slot>
+    <Field
+      v-if="as !== 'select'"
+      :as="as"
+      v-bind="fieldAttrs"
+      v-model="value"
+    ></Field>
+
+    <Field v-if="as === 'select'" :as="as" v-bind="fieldAttrs" v-model="value">
+      <slot></slot>
+    </Field>
 
     <slot name="after-input"></slot>
 
