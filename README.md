@@ -29,7 +29,7 @@ yarn supabase:start
 npm run supabase:start
 ```
 
-6. The needed supabase environment variables will print after the service has started. Rename .env.example to .env and provide the following variables from the terminal print out.
+6. The needed supabase environment variables will print after the service has started. Duplicate .env.example to .env and provide the following variables from the terminal print out.
 
 ```sh
 # this can stay the same
