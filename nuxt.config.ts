@@ -4,16 +4,11 @@ export default defineNuxtConfig({
   ssr: false,
   modules: [
     "@nuxtjs/tailwindcss",
-    "@nuxtjs/color-mode",
     "@nuxtjs/supabase",
     "@vueuse/nuxt",
     "@vee-validate/nuxt",
     "nuxt-proxy",
   ],
-  colorMode: {
-    preference: "cupcake", // default theme
-    dataValue: "theme", // activate data-theme in <html> tag
-  },
   proxy: {
     options: {
       target: "http://localhost:55321",
