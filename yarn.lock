@@ -1162,15 +1162,6 @@
     vite-plugin-checker "^0.6.1"
     vue-bundle-renderer "^1.0.3"
 
-"@nuxtjs/color-mode@^3.3.0":
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/@nuxtjs/color-mode/-/color-mode-3.3.0.tgz#4c0e2ea2b23813461e6cfaa10dd169805a5145a6"
-  integrity sha512-YVFNmTISke1eL7uk5p9I1suOsM222FxrqKoF13HS4x94OKCWwPLLeTCEzHZ8orzKnaFUbCXpuL4pRv8gvW+0Kw==
-  dependencies:
-    "@nuxt/kit" "^3.5.3"
-    lodash.template "^4.5.0"
-    pathe "^1.1.1"
-
 "@nuxtjs/supabase@^0.3.8":
   version "0.3.8"
   resolved "https://registry.yarnpkg.com/@nuxtjs/supabase/-/supabase-0.3.8.tgz#8a01ddf1bbc5cf5dfc44bbb06c7567ccc0d52fa1"
