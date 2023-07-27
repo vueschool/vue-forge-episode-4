@@ -52,19 +52,19 @@ const convertedAmount = computed(() => {
 	}
 	return amount.toLocaleString(locale.value, localeOptions.value);
 })
-watch([asKda, asUsd], ([kda, usd]) => {
-	console.log({
-		kda,
-		usd
-	})
-})
 </script>
 
 <template>
   <span class="group cursor-pointer">
-    <span v-if="currencySign" class="text-xs mr-0.5 group-hover:hidden inline transition-all duration-200">{{ currencySign }}</span>
-	  <span class="group-hover:hidden inline transition-all duration-200">{{ amount }}</span>
+    <span v-if="currencySign" class="text-xs mr-0.5 group-hover:hidden inline transition-all duration-200">
+	    {{ currencySign }}
+    </span>
+	  <span class="group-hover:hidden inline transition-all duration-200">
+		  {{ amount }}
+	  </span>
 	  <span class="text-xs mr-0.5 group-hover:inline hidden transition-all duration-200">$</span>
-	  <span class="group-hover:inline hidden transition-all duration-200">{{ convertedAmount }}</span>
+	  <span class="group-hover:inline hidden transition-all duration-200">
+		  {{ convertedAmount }}
+	  </span>
   </span>
 </template>
