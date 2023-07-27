@@ -282,7 +282,6 @@ export const usePact = async () => {
       // we can connect it with the data in the database
       // remove from pending requests
     } else {
-      console.log("nope");
       // there was an error alert
     }
   };
