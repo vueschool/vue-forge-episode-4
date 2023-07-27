@@ -79,13 +79,7 @@ const category = computed(() => {
 
 // 🚨 some of the following code has been added to the starting branch of this exercise for your convenience
 
-// You can use this to get the USD values as KDA
-const softCap = computed(() => form.softCap);
-const hardCap = computed(() => form.hardCap);
-const { asKda: softCapAsKda } = useKdaUsd(softCap, "usd");
-const { asKda: hardCapAsKda } = useKdaUsd(hardCap, "usd");
-
-// You can also use these abstractions to save data to supabase or the blockchain
+// You can use these abstractions to save data to supabase and/or the blockchain
 // definitely try to do one of your choice manually though! It's a great learning experience
 const { create: createOnBlockchain } = await usePact();
 const { create: createProjectInDB } = useProjects();
@@ -98,19 +92,13 @@ const submitForm = async () => {
   // from the beginning of today to a future time today (20 mins from now)
   const startsAt = getExactStartTimeFromDateField(form.startsAt);
 
-  if (!softCapAsKda.value || !hardCapAsKda.value) {
-    throw createError(
-      "There was an error converting the soft and hard caps to KDA"
-    );
-  }
-
   const { requestKey } = await createOnBlockchain({
     id: form.projectId,
     name: form.title,
     startsAt: startsAt, // form.startsAt,
     finishesAt: form.finishesAt,
-    softCap: softCapAsKda.value?.toString(),
-    hardCap: hardCapAsKda.value?.toString(),
+    softCap: form.softCap.toString(),
+    hardCap: form.hardCap.toString(),
   });
 
   if (requestKey) {
