@@ -2,5 +2,5 @@
   "task": ["fund"],
   "network": "fast-development",
   "chainId": "0",
-  "endpoint": "http://devnet:8080"
+  "endpoint": "http://devnet:8070"
 }

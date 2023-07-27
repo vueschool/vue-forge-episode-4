@@ -19,7 +19,7 @@ import { RemovableRef, useStorage } from "@vueuse/core";
 
 const kadenaClient = getClient(
   ({ chainId }) =>
-    `http://127.0.0.1:8080/chainweb/0.0/fast-development/chain/${chainId}/pact`
+    `http://127.0.0.1:8070/chainweb/0.0/fast-development/chain/${chainId}/pact`
 );
 const { chain, networkId, isConnected, publicKey } = useWallet();
 export const usePact = async () => {

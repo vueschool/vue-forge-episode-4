@@ -3,7 +3,7 @@
 	"pactFile": "crowdfund.pact",
 	"dataFile": ".deploy-data.json",
 	"deployTargets": ["l1"],
-	"l1Endpoint": "http://devnet:8080",
+	"l1Endpoint": "http://devnet:8070",
 	"l1Chains": ["0"],
 	"signer": "sender00"
 }
