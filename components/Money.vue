@@ -38,12 +38,15 @@ const amount = computed(() => {
 
   return amount.toLocaleString(locale.value, localeOptions.value);
 });
-const currencySign = ref(props.sign || "$");
+const currencySign = ref(props.sign || null);
 </script>
 
 <template>
   <span>
-    <span class="text-sm mr-0.5">{{ currencySign }}</span
-    >{{ amount }}<span class="text-sm">{{ sign }}</span>
+    <span v-if="currencySign" class="text-sm mr-0.5">
+	    {{ currencySign }}
+    </span>
+	  <span>{{ amount }}</span>
+	  <span class="text-sm">{{ sign }}</span>
   </span>
 </template>
