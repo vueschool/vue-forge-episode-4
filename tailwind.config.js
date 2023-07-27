@@ -13,7 +13,9 @@ module.exports = {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["cupcake", "dark", "cmyk"],
+    theme: "cupcake",
+    darkMode: false,
+    themes: ["cupcake"],
   },
   safelist: [
     "border-t-warning",

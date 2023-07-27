@@ -28,7 +28,6 @@
     "@kadena/client": "1.0.0-alpha.8",
     "@kadena/pactjs": "^0.3.0",
     "@kadena/pactjs-cli": "1.0.0-alpha.7",
-    "@nuxtjs/color-mode": "^3.3.0",
     "@nuxtjs/tailwindcss": "^6.8.0",
     "@vee-validate/nuxt": "^4.10.7",
     "@vee-validate/zod": "^4.10.7",
