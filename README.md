@@ -11,32 +11,51 @@ git clone git@github.com:vueschool/vue-forge-episode-4.git
 
 ```sh
 yarn
+# or
+npm install
 ```
 
 4. Start the Supabase service
 
 ```sh
 yarn supabase:start
+# or
+npm run supabase:start
 ```
 
-5. The needed supabase environment variables will print after the service has started. Add them to your .env file (can use .env.example as a template). You can also retrieve these at any time by running the following:
+5. The needed supabase environment variables will print after the service has started. Rename .env.example to .env and provide the following variables from the terminal print out.
+
+```sh
+# this can stay the same
+SUPABASE_URL="http://localhost:3000"
+# anon key the terminal print out
+SUPABASE_KEY="<your anon key>"
+# service role key from the terminal print out
+SUPABASE_SERVICE_KEY="<your service_role key>"
+```
+
+You can also retrieve these at any time by running the following:
 
 ```sh
 npx supabase status
 ```
 
-6. Migrate and seed your database with initial schema and values by running:
+1. Migrate and seed your database with initial schema and values by running:
 
 ```sh
 yarn db:reset
+# or
+npm run db:reset
 ```
 
 7. Start the dev server
 
 ```sh
 yarn dev
+# or
+npm run dev
 ```
 
-8. [Follow these directions in the Devnet Setup Guide](https://vueschool.notion.site/DevNet-Setup-c4a6ae8962fb40e49a5e13904570e863?pvs=4) to get a local development blockchain network running.
+1. [Follow these directions in the Devnet Setup Guide](https://vueschool.notion.site/DevNet-Setup-2ee973bf5061497d998823dd5cf43e6b?pvs=4) to get a local development blockchain network running.
 
-9. That's it! 🎉 You're ready to go.
+2. That's it! 🎉 You're ready to go.
