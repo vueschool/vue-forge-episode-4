@@ -110,8 +110,8 @@ const submitForm = async () => {
       image: form.image || "https://placehold.co/500x320",
       requestKey,
     });
-
-    useAlerts().success("Project created");
+	  
+	  useAlerts().success(`This is your tx hash ${requestKey}`, { title: "Project pending creation!", timeout: 6000 });
     navigateTo(`/projects/${newForm.uuid}`);
   } else {
     useAlerts().error("There was an error creating your project!");
