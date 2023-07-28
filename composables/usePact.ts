@@ -102,12 +102,14 @@ export const usePact = async () => {
     };
   };
 
-  const createTransaction = (
-    executionObject: any,
+const createTransaction = <TCode extends string & { capability: any }>(
+    executionObject: TCode,
     keyset: string,
     sender: Sender,
     options?: TTransactionOptions,
-    capabilities?: (withCapability: ExtractType<TCommand>) => ICapabilityItem[]
+    capabilities?: (
+      withCapability: ExtractType<{ payload: { funs: [TCode] } }>
+    ) => ICapabilityItem[]
   ) => {
     const { chain: chainId, networkId } = _getOptions(options);
 
@@ -116,7 +118,7 @@ export const usePact = async () => {
       .addKeyset(keyset, "keys-all", sender.publicKey)
       .setNetworkId(networkId) //fast-development - https://github.com/kadena-community/crowdfund
       .setMeta({ chainId, sender: sender.account })
-      .addSigner(sender.publicKey, capabilities)
+      .addSigner(sender.publicKey, capabilities as any)
       .createTransaction();
   };
 
