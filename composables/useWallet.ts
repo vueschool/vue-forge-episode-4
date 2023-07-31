@@ -1,5 +1,6 @@
-import { getClient, IPactCommand, Pact } from "@kadena/client";
+import { IPactCommand, Pact } from "@kadena/client";
 import { ICommand } from "@kadena/types";
+import { useGetClient } from '~/composables/useGetClient'
 
 const initialized = ref(false);
 const balance = ref<string | null>(null);
@@ -102,10 +103,7 @@ export function useWallet() {
     if (account.value) {
       // Exercise 1 starts here
       // Use the Kadena Client to get the balance
-      const client = getClient(
-        ({ chainId }) =>
-          `http://127.0.0.1:8070/chainweb/0.0/fast-development/chain/${chainId}/pact`
-      );
+      const client = useGetClient();
       const transaction = Pact.builder
         .execution(Pact.modules.coin["get-balance"](account.value))
         .setMeta({ sender: account.value, chainId: chain.value })

@@ -1,6 +1,4 @@
 import {
-	createWalletConnectQuicksign,
-	getClient,
 	ICommandResult,
 	IPactCommand,
 	isSignedCommand,
@@ -11,17 +9,10 @@ import {
 import { ExtractType } from '@kadena/client/lib/commandBuilder/commandBuilder'
 import { ICapabilityItem } from '@kadena/client/lib/interfaces/IPactCommand'
 import { PactNumber } from '@kadena/pactjs'
-import Client from '@walletconnect/sign-client'
-import SignClient from '@walletconnect/sign-client'
-import { SessionTypes } from '@walletconnect/types'
-import { nanoid } from 'nanoid'
 import { RemovableRef, useStorage } from '@vueuse/core'
 
-const kadenaClient = getClient(
-	({ chainId }) =>
-		`http://127.0.0.1:8070/chainweb/0.0/fast-development/chain/${ chainId }/pact`
-)
-const { chain, networkId, isConnected, publicKey } = useWallet()
+const kadenaClient = useGetClient()
+const { publicKey } = useWallet()
 export const usePact = async () => {
 	const { signTransaction, connect, networkId, chain } = useWallet()
 	const pendingRequestsKeys: RemovableRef<
@@ -195,8 +186,8 @@ export const usePact = async () => {
 					startsAt: new Date(form.startsAt),
 					finishesAt: new Date(form.finishesAt)
 				},
-				hardCap: form.hardCap,
-				softCap: form.softCap,
+				hardCap: Number(form.hardCap),
+				softCap: Number(form.softCap),
 				keyset
 			})
 			const transaction = createTransaction(cmd, keyset, sender)
@@ -358,12 +349,11 @@ export const usePact = async () => {
       }
 			
       if (pendingRequest.result.status === 'failure') {
-	      useAlerts().error(pendingRequest.result?.error?.message || 'There was an error creating the project on the blockchain', {
-		      title: 'There was an error creating the project'
-	      })
+	      useAlerts().error(
+					pendingRequest.result?.error?.message || 'There was an error creating the project on the blockchain',
+		      { title: 'There was an error creating the project' }
+	      )
 	      await updateStatusForRequestKey(pendingRequest.reqKey, { status: 'failed' })
-	      
-       
       }
 		}
 	}
