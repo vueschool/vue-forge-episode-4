@@ -12,9 +12,9 @@ const { alerts, success, error, warning, info, dismiss } = useAlerts();
         class="mb-4 border-t-[1px] shadow-sm alert !pr-0"
         :class="`border-t-${alert.type}`"
       >
-        <div class="flex justify-between sm:w-80">
+        <div class="flex justify-between sm:w-96 px-4">
           <div class="flex items-center">
-            <div class="mx-4">
+            <div>
               <div class="font-bold" v-if="alert.title">{{ alert.title }}</div>
               <div class="">{{ alert.message }}</div>
             </div>
@@ -22,7 +22,7 @@ const { alerts, success, error, warning, info, dismiss } = useAlerts();
           <button
             v-if="alert.dismissiable"
             @click="dismiss(alert)"
-            class="p-1 transition rounded hover:bg-white"
+            class="p-0.5 px-1.5 transition rounded hover:bg-white absolute top-2 right-2"
           >
             x
           </button>

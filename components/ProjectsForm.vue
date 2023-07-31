@@ -1,6 +1,14 @@
 <script setup lang="ts">
+import { watchDebounced } from "@vueuse/core";
+import { nanoid } from "nanoid";
+import { UuidT } from "~/types";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as zod from "zod";
+
+type ProjectProps = {
+  uuid?: UuidT | null | undefined;
+};
+const props = defineProps<ProjectProps>();
 
 // Validation
 const validationSchema = toTypedSchema(
@@ -13,7 +21,7 @@ const validationSchema = toTypedSchema(
     categoryUuid: zod.string().nonempty("Category is required"),
     softCap: zod
       .number()
-      .min(10000, { message: "Too low" })
+      .min(10000, )
       .max(100000, { message: "Too high" }),
     hardCap: zod
       .number()
@@ -44,13 +52,14 @@ const validationSchema = toTypedSchema(
 // Set initial form values
 // and keep up with form state
 const form = reactive({
+  projectId: nanoid(),
   title: "",
   description: "",
   image: "",
   categoryUuid: "",
   softCap: 10_000,
   hardCap: 25_000,
-  startsAt: useDateFormat(new Date(), "YYYY-MM-DD").value,
+  startsAt: useDateFormat(getDateXMinutesFromNow(10), "YYYY-MM-DD").value,
   finishesAt: useDateFormat(getDateXMonthsFromNow(6), "YYYY-MM-DD").value,
 });
 
@@ -77,180 +86,247 @@ const category = computed(() => {
   );
 });
 
-// 🚨 some of the following code has been added to the starting branch of this exercise for your convenience
+// handle form submit
+const { create: createProjectInDB } = useProjects();
+const finishesAt = computed(() => {
+  return form.finishesAt ? new Date(form?.finishesAt) : null;
+});
 
-// You can use this to get the USD values as KDA
+const startsAt = computed(() => {
+  return form.startsAt ? new Date(form?.startsAt) : null;
+});
+
+const isFinishDateBeforeStartDate = computed(() => {
+  return (
+    finishesAt.value &&
+    startsAt.value &&
+    finishesAt.value.getTime() < startsAt.value.getTime()
+  );
+});
+
+const errors = reactive<Record<string, string | null>>({
+  title: null,
+  description: null,
+  image: null,
+  categoryUuid: null,
+  finishesAt: null,
+  softCap: null,
+  hardCap: null,
+  startsAt: null,
+});
+
+const validateFinishDateIsAfterStartDate = async () => {
+  if (isFinishDateBeforeStartDate.value) {
+    errors.finishesAt = "Finish date must be after start date";
+  } else {
+    errors.finishesAt = null;
+  }
+};
+
+watchDebounced([startsAt, finishesAt], validateFinishDateIsAfterStartDate, {
+  debounce: 500,
+  maxWait: 1000,
+});
+
 const softCap = computed(() => form.softCap);
 const hardCap = computed(() => form.hardCap);
-const { asKda: softCapAsKda } = useKdaUsd(softCap, "usd");
-const { asKda: hardCapAsKda } = useKdaUsd(hardCap, "usd");
+const { asKda: softCapAsKda } = useKdaUsd(form.softCap, "usd");
+const { asKda: hardCapAsKda } = useKdaUsd(form.hardCap, "usd");
 
-// You can also use these abstractions to save data to supabase or the blockchain
-// definitely try to do one of your choice manually though! It's a great learning experience
 const { create: createOnBlockchain } = await usePact();
-const { create: createProjectInDB } = useProjects();
-
-// handle form submit
 const submitForm = async () => {
-  // to satisfy the rules of the contract in the blockchain
-  // the start date cannot be in the past (this includes minutes, seconds, etc)
-  // if you choose a start time of today on the form, we need to coerce that
-  // from the beginning of today to a future time today (20 mins from now)
-  const startsAt = getExactStartTimeFromDateField(form.startsAt);
+  // The result is the request Key, we should save it in local storage
+  // start listening to the request key and create the project on the WEB2.0
+  // backend, setting the status to pending.
+  // Listening is a long term process, once listening is done, we should
+  // update the status to success or error.
 
+  // If the user reloads the page, we should check if the request key is
+  // present in local storage, if so, we should start listening to the
+  // request key again.
+
+  const startsAt = getExactStartTimeFromDateField(form.startsAt);
   if (!softCapAsKda.value || !hardCapAsKda.value) {
     throw createError(
       "There was an error converting the soft and hard caps to KDA"
     );
   }
 
-  // 👉 this is where you will do your saving to the blockchain and the DB
+  const { requestKey } = await createOnBlockchain({
+    id: form.projectId,
+    name: form.title,
+    startsAt: startsAt, // form.startsAt,
+    finishesAt: form.finishesAt,
+    softCap: softCapAsKda.value?.toString(),
+    hardCap: hardCapAsKda.value?.toString(),
+  });
 
-  useAlerts().success("Project created");
+  if (requestKey) {
+    const newForm = await createProjectInDB({
+      ...form,
+      hardCap: form.hardCap.toString(),
+      softCap: form.softCap.toString(),
+      excerpt: `${form.description.substring(0, 130)} ...`,
+      image: form.image || "https://placehold.co/500x320",
+      requestKey,
+    });
+
+    useAlerts().success("Project created");
+    navigateTo(`/projects/${newForm.uuid}`);
+  } else {
+    useAlerts().error("There was an error creating your project!");
+  }
 };
 </script>
 
 <template>
-  <div class="w-full max-w-5xl mx-auto mb-20">
-    <h3 class="py-5 text-3xl">Kickstart your own project</h3>
+  <div class="w-full mx-auto mb-20 max-w-7xl">
+    <div class="w-full py-12 h-44">
+      <h3 class="text-3xl">Kickstart your own project</h3>
+    </div>
 
-    <div class="grid grid-cols-12 gap-8">
+    <div class="grid grid-cols-12">
       <Form
         @submit="submitForm"
         class="w-full col-span-8"
         :validation-schema="validationSchema"
       >
-        <FormField
-          label="What is your projects name?"
-          name="title"
-          v-model="form.title"
-          hint="Use a very handy title that people could identify your
+        <div
+          class="relative flex flex-col items-center justify-start w-full h-full px-8 space-y-4"
+        >
+          <FormField
+            label="What is your projects name?"
+            name="title"
+            v-model="form.title"
+            hint="Use a very handy title that people could identify your
                 project"
-        />
+          />
 
-        <FormField
-          label="What is your project about?"
-          name="description"
-          v-model="form.description"
-          as="textarea"
-          hint="Describe with full detail your project so that people
+          <FormField
+            label="What is your project about?"
+            name="description"
+            v-model="form.description"
+            as="textarea"
+            hint="Describe with full detail your project so that people
                 understand exactly what it is about."
-        />
+          />
 
-        <AppFileUpload
-          label="Upload a cover image for your project"
-          bucket="projects"
-          @file:uploaded="form.image = $event"
-          class="mb-4"
-        />
+          <AppFileUpload
+            bucket="projects"
+            @file:uploaded="form.image = $event"
+          />
 
-        <FormField
-          label="Which category does your project fit in?"
-          as="select"
-          name="categoryUuid"
-          v-model="form.categoryUuid"
-          hint="Selecting a fitting category ensures the right people find your project."
-        >
-          <option disabled selected :value="null">Pick one</option>
-          <option
-            v-for="category in categories"
-            :key="category.uuid"
-            :value="category.uuid"
+          <FormField
+            label="Which category does your project fit in?"
+            as="select"
+            name="categoryUuid"
+            v-model="form.categoryUuid"
+            hint="Selecting a fitting category ensures the right people find your project."
           >
-            {{ category.name }}
-          </option>
-        </FormField>
+            <option disabled selected :value="null">Pick one</option>
+            <option
+              v-for="category in categories"
+              :key="category.uuid"
+              :value="category.uuid"
+            >
+              {{ category.name }}
+            </option>
+          </FormField>
 
-        <FormField
-          label="What is the soft cap of your project?"
-          name="softCap"
-          type="range"
-          min="0"
-          max="100000"
-          class="range"
-          step="5000"
-          v-model.number="form.softCap"
-          hint="Soft cap is the minimum amount of money that you need to raise
-                in order to start your project."
-        >
-          <template #label-text-alt>
-            <Money :amount="form.softCap" />
-          </template>
+          <FormField
+            label="What is the soft cap of your project?"
+            name="softCap"
+            type="range"
+            min="0"
+            max="100000"
+            class="range"
+            step="5000"
+            v-model.number="form.softCap"
+            hint="Soft cap is the minimum amount of money that you need to raise
+                in order to start your project. USD amount is approximate. Will be capped in KDA at current market value"
+          >
+            <template #label-text-alt>
+              <Money :amount="form.softCap" />
+            </template>
 
-          <template #after-input>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span><Money :amount="10000" /></span>
-              <span><Money :amount="25000" /></span>
-              <span><Money :amount="50000" /></span>
-              <span><Money :amount="75000" /></span>
-              <span><Money :amount="100000" /></span>
-            </div>
-          </template>
-        </FormField>
+            <template #after-input>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span><Money :amount="10000" /></span>
+                <span><Money :amount="25000" /></span>
+                <span><Money :amount="50000" /></span>
+                <span><Money :amount="75000" /></span>
+                <span><Money :amount="100000" /></span>
+              </div>
+            </template>
+          </FormField>
 
-        <FormField
-          label="What is the hard cap of your project?"
-          name="hardCap"
-          type="range"
-          min="0"
-          max="100000"
-          class="range"
-          step="5000"
-          v-model.number="form.hardCap"
-          hint="Hard cap is the maximum amount of money that you need to raise
-                in order to start your project."
-        >
-          <template #label-text-alt>
-            <Money :amount="form.hardCap" />
-          </template>
+          <FormField
+            label="What is the hard cap of your project?"
+            name="hardCap"
+            type="range"
+            min="0"
+            max="100000"
+            class="range"
+            step="5000"
+            v-model.number="form.hardCap"
+            hint="Hard cap is the maximum amount of money that you need to raise
+                in order to start your project. USD amount is approximate. Will be capped in KDA at current market value"
+          >
+            <template #label-text-alt>
+              <Money :amount="form.hardCap" />
+            </template>
 
-          <template #after-input>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div class="flex justify-between w-full px-2 text-xs">
-              <span><Money :amount="10000" /></span>
-              <span><Money :amount="25000" /></span>
-              <span><Money :amount="50000" /></span>
-              <span><Money :amount="75000" /></span>
-              <span><Money :amount="100000" /></span>
-            </div>
-          </template>
-        </FormField>
+            <template #after-input>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div class="flex justify-between w-full px-2 text-xs">
+                <span><Money :amount="10000" /></span>
+                <span><Money :amount="25000" /></span>
+                <span><Money :amount="50000" /></span>
+                <span><Money :amount="75000" /></span>
+                <span><Money :amount="100000" /></span>
+              </div>
+            </template>
+          </FormField>
 
-        <FormField
-          label="When should your project funding start?"
-          name="startsAt"
-          type="date"
-          v-model="form.startsAt"
-          hint="This is the date that your project will open to start receiving funds."
-        />
+          <FormField
+            label="When should your project funding start?"
+            name="startsAt"
+            type="date"
+            v-model="form.startsAt"
+            hint="This is the date that your project will open to start receiving funds."
+          />
 
-        <FormField
-          label="When should your project funding end?"
-          name="finishesAt"
-          type="date"
-          v-model="form.finishesAt"
-          hint="This is the date that your project will stop receiving funds."
-        />
+          <FormField
+            label="When should your project funding end?"
+            name="finishesAt"
+            type="date"
+            v-model="form.finishesAt"
+            hint="This is the date that your project will stop receiving funds."
+          />
 
-        <button class="w-full btn btn-primary">Publish your project</button>
+          <button type="submit" class="w-full btn btn-primary">
+            Publish your project
+          </button>
+        </div>
       </Form>
-      <div class="col-span-4">
-        <div>
+      <div class="h-full col-span-4">
+        <div class="max-w-[500px] px-8">
           <ClientOnly>
             <ProjectCard
+              class="fixed w-[500px]"
               :project="{
                 ...form,
                 backers: Math.floor(Math.random() * 1000),

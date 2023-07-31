@@ -8,7 +8,12 @@ export const useKdaUsd = (
   const rateError = useState("kda-usd-rate-error");
   const rateLoading = useState("kda-usd-rate-loading");
   const value = ref(usdOrKda);
-
+  if (isRef(usdOrKda)) {
+    watch(usdOrKda, (newValue) => {
+      value.value = newValue;
+    });
+  }
+  
   /**
    * Fetch rate from coingecko
    */
@@ -35,12 +40,12 @@ export const useKdaUsd = (
   }
 
   const asKda = computed(() => {
-    if (currency === "kda") return value.value;
+    if (currency === "kda" || isNaN(Number(value.value))) return value.value;
     return usdToKda(value.value);
   });
 
   const asUsd = computed(() => {
-    if (currency === "usd") return value.value;
+    if (currency === "usd" || isNaN(Number(value.value))) return value.value;
     return kdaToUsd(value.value);
   });
 
