@@ -21,7 +21,7 @@ const validationSchema = toTypedSchema(
     categoryUuid: zod.string().nonempty("Category is required"),
     softCap: zod
       .number()
-      .min(10000, )
+      .min(10000, { message: "Too low" })
       .max(100000, { message: "Too high" }),
     hardCap: zod
       .number()
@@ -185,7 +185,7 @@ const submitForm = async () => {
       <h3 class="text-3xl">Kickstart your own project</h3>
     </div>
 
-    <div class="grid grid-cols-12">
+    <div class="grid grid-cols-12 gap-8">
       <Form
         @submit="submitForm"
         class="w-full col-span-8"
