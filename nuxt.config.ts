@@ -16,4 +16,9 @@ export default defineNuxtConfig({
       pathFilter: ["/rest/**", "/auth/**", "/storage/**"],
     },
   },
+  typescript: {
+    tsConfig: {
+      compilerOptions: { types: [".kadena/pactjs-generated"] },
+    },
+  },
 });
