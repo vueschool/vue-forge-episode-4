@@ -6,7 +6,7 @@ import * as zod from 'zod'
 const emit = defineEmits<{
 	(e: 'funded'): void
 }>()
-
+const { fund } = await usePact()
 const props = defineProps<{
 	projectId: string;
 }>()
@@ -26,12 +26,26 @@ const form = reactive({
 	amount: 10
 })
 
+const convertedAmount = computed(() => {
+	const { asUsd } = useKdaUsd(`${form.amount}`, 'kda')
+	return Number(asUsd.value)?.toFixed(2)
+})
+
 const submitForm = async () => {
-	// Nothing here, but here is where we should pledge the project
-	// and send the amount to the blockchain.
+	if (!form.amount) return
+	const { requestKey } = await fund({
+		id: props.projectId,
+		amount: form.amount.toString()
+	})
 	
-	// 💡 If you are stuck, here is a hint:
-	// const { fund } = await usePact()
+	if (requestKey) {
+		// send pledge amount to blockchain
+		useAlerts().success('This is your transaction key: ' + requestKey, {
+			title: 'Thanks for pledging!',
+			dismissiable: true,
+			timeout: 60000
+		})
+	}
 	
 	emit('funded')
 }
@@ -54,7 +68,7 @@ const submitForm = async () => {
         </span>
 			</div>
 			<div class="w-full text-left text-primary mb-2">
-				<!--	Here is where the converted amount should be shown -->
+				$USD {{  convertedAmount }}
 			</div>
 			<button type="submit" class="btn btn-primary">Pledge Now</button>
 		</label>
