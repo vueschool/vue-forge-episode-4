@@ -8,7 +8,6 @@ const chain = ref<IPactCommand["meta"]["chainId"]>("0");
 const instance = ref<any>(null);
 const publicKey = ref<null | string>(null);
 const account = ref<null | string>("");
-const connectedSites = ref<any[]>([]);
 const isInstalled = ref(false);
 const isConnected = computed(() => account.value && publicKey.value);
 
@@ -18,20 +17,13 @@ export function useWallet() {
       console.warn("Kadena Wallet is not installed");
     }
   });
-  const checkIdWalletIsInstalled = () => {
+  const checkIfWalletIsInstalled = () => {
     if (initialized.value) return;
     // @ts-expect-error - ecko wallet (kadena) may not be installed
     const { kadena } = window;
     isInstalled.value = Boolean(kadena && kadena.isKadena);
     instance.value = kadena;
     initialized.value = true;
-  };
-
-  const initialize = async () => {
-    checkIdWalletIsInstalled();
-    if (isInstalled.value) {
-      // You will start here
-    }
   };
 
   const connect = async () => {
@@ -42,7 +34,7 @@ export function useWallet() {
       });
 
       if (status === "success") {
-        await setAccount(account);
+        setAccount(account);
       }
 
       return { account, status };
@@ -52,22 +44,9 @@ export function useWallet() {
   const setAccount = (data: {
     account: string | null;
     publicKey: string | null;
-    connectedSites: any[];
   }) => {
     account.value = data.account;
     publicKey.value = data.publicKey;
-    connectedSites.value = data.connectedSites;
-  };
-
-  const requestAccount = async () => {
-    if (isInstalled.value && instance.value) {
-      const response = await instance?.value.request({
-        method: "kda_requestAccount",
-        networkId: networkId.value,
-      });
-      console.log("kda_requestAccount", response);
-      return response;
-    }
   };
 
   const checkStatus = async () => {
@@ -92,7 +71,7 @@ export function useWallet() {
           networkId: networkId.value,
         });
         console.log("disconnect response", response);
-        setAccount({ account: null, publicKey: null, connectedSites: [] });
+        setAccount({ account: null, publicKey: null });
         return response;
       }
     }
@@ -131,7 +110,6 @@ export function useWallet() {
       method: "kda_requestQuickSign",
       data: {
         networkId: networkId.value,
-        // signingCmd: signingRequest,
         commandSigDatas: [
           {
             sigs: [
@@ -163,25 +141,18 @@ export function useWallet() {
     }
   });
 
-  initialize().then(() => {
-    instance.value?.on("res_accountChange", (event: any) => {
-      console.log(event);
-    });
-  });
+  checkIfWalletIsInstalled();
 
   return {
     connect,
     disconnect,
     checkStatus,
-
     signTransaction,
 
     balance: computed(() => balance.value),
-    initialized: computed(() => initialized.value),
     isConnected,
     account: computed(() => account.value),
     publicKey: computed(() => publicKey.value),
-    connectedSites: computed(() => connectedSites.value),
     chain: computed(() => chain.value),
     networkId: computed(() => networkId.value),
     instance: computed(() => instance.value),
