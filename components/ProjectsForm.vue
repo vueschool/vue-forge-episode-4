@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { Pact, getClient, literal, readKeyset } from "@kadena/client";
+import { PactNumber } from "@kadena/pactjs";
 import { toTypedSchema } from "@vee-validate/zod";
+import { nanoid } from "nanoid";
 import * as zod from "zod";
 
 // Validation
@@ -44,6 +47,7 @@ const validationSchema = toTypedSchema(
 // Set initial form values
 // and keep up with form state
 const form = reactive({
+  projectId: nanoid(),
   title: "",
   description: "",
   image: "",
@@ -81,7 +85,7 @@ const category = computed(() => {
 
 // You can use these abstractions to save data to supabase and/or the blockchain
 // definitely try to do one of your choice manually though! It's a great learning experience
-const { create: createOnBlockchain } = await usePact();
+// const { create: createOnBlockchain } = await usePact();
 const { create: createProjectInDB } = useProjects();
 
 // handle form submit
@@ -92,29 +96,82 @@ const submitForm = async () => {
   // from the beginning of today to a future time today (20 mins from now)
   const startsAt = getExactStartTimeFromDateField(form.startsAt);
 
-  const { requestKey } = await createOnBlockchain({
-    id: form.projectId,
-    name: form.title,
-    startsAt: startsAt, // form.startsAt,
-    finishesAt: form.finishesAt,
-    softCap: form.softCap.toString(),
-    hardCap: form.hardCap.toString(),
+  const { account, publicKey, signTransaction } = useWallet();
+
+  if (!account.value || !publicKey.value) {
+    useAlerts().error("Please connect your wallet");
+    return;
+  }
+
+  const { asKda: softCapAsKda } = useKdaUsd(form.softCap, "usd");
+  const { asKda: hardCapAsKda } = useKdaUsd(form.hardCap, "usd");
+
+  if (!softCapAsKda.value || !hardCapAsKda.value) {
+    throw createError(
+      "There was an error converting the soft and hard caps to KDA"
+    );
+  }
+
+  const unsignedTransaction = Pact.builder
+    .execution(
+      Pact.modules["free.crowdfund"]["create-project"](
+        form.projectId,
+        form.title,
+        literal("coin"),
+        new PactNumber(hardCapAsKda.value.toString()).toPactDecimal(),
+        new PactNumber(softCapAsKda.value.toString()).toPactDecimal(),
+        new Date(startsAt),
+        new Date(form.finishesAt),
+        account.value,
+        readKeyset("owner-guard")
+      )
+    )
+    .addKeyset("owner-guard", "keys-all", publicKey.value)
+    .addSigner(publicKey.value)
+    .setNetworkId("fast-development")
+    .setMeta({ chainId: "0", sender: account.value })
+    .createTransaction();
+
+  const signedTransaction = await signTransaction(unsignedTransaction);
+
+  console.log(unsignedTransaction, signedTransaction);
+
+  const kadenaClient = getClient(
+    ({ chainId }) =>
+      `http://127.0.0.1:8080/chainweb/0.0/fast-development/chain/${chainId}/pact`
+  );
+
+  const requestKey = await kadenaClient.submit(signedTransaction);
+
+  const pollResult = await kadenaClient.pollStatus(requestKey, {
+    interval: 2500,
+    onPoll: () => {
+      useAlerts().info(`requestKey: ${requestKey}`, {
+        title: "Checking blockchain for project creation",
+        timeout: 2000,
+      });
+    },
   });
 
-  if (requestKey) {
-    const newForm = await createProjectInDB({
+  const transactionResult = pollResult[requestKey].result;
+
+  if (transactionResult.status === "success") {
+    useAlerts().success("Project created on blockchain");
+    const { uuid } = await createProjectInDB({
       ...form,
-      hardCap: form.hardCap.toString(),
-      softCap: form.softCap.toString(),
+      startsAt,
       excerpt: `${form.description.substring(0, 130)} ...`,
       image: form.image || "https://placehold.co/500x320",
-      requestKey,
+      softCap: softCapAsKda.value?.toString(),
+      hardCap: hardCapAsKda.value?.toString(),
+      requestKey: requestKey,
     });
 
-    useAlerts().success("Project created");
-    navigateTo(`/projects/${newForm.uuid}`);
+    navigateTo(`/projects/${uuid}`);
   } else {
-    useAlerts().error("There was an error creating your project!");
+    useAlerts().error(`${transactionResult.error}`, {
+      title: "Error creating project",
+    });
   }
 };
 </script>
