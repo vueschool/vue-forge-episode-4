@@ -1,5 +1,4 @@
 import {
-  createWalletConnectQuicksign,
   getClient,
   ICommandResult,
   IPactCommand,
@@ -11,17 +10,13 @@ import {
 import { ExtractType } from "@kadena/client/lib/commandBuilder/commandBuilder";
 import { ICapabilityItem } from "@kadena/client/lib/interfaces/IPactCommand";
 import { PactNumber } from "@kadena/pactjs";
-import Client from "@walletconnect/sign-client";
-import SignClient from "@walletconnect/sign-client";
-import { SessionTypes } from "@walletconnect/types";
-import { nanoid } from "nanoid";
 import { RemovableRef, useStorage } from "@vueuse/core";
 
 const kadenaClient = getClient(
   ({ chainId }) =>
     `http://127.0.0.1:8080/chainweb/0.0/fast-development/chain/${chainId}/pact`
 );
-const { chain, networkId, isConnected, publicKey } = useWallet();
+const { chain, networkId, isConnected, account, publicKey } = useWallet();
 export const usePact = async () => {
   const { signTransaction, connect, networkId, chain } = useWallet();
   const pendingRequestsKeys: RemovableRef<
@@ -30,9 +25,6 @@ export const usePact = async () => {
 
   type Key = string;
   type Account = `${"k" | "w"}:${string}` | string;
-  const keyFromAccount = (account: Account): string => {
-    return account.split(":")[1];
-  };
 
   type Sender = {
     account: Account;
@@ -44,6 +36,7 @@ export const usePact = async () => {
     funder: string;
     amount: number;
   };
+
   type TProject = {
     id: string;
     name: string;
@@ -80,6 +73,7 @@ export const usePact = async () => {
 
     return cmd;
   };
+
   type TTransactionOptions = {
     networkId?: string;
     chain?: IPactCommand["meta"]["chainId"];
@@ -102,12 +96,14 @@ export const usePact = async () => {
     };
   };
 
-  const createTransaction = (
-    executionObject: any,
+  const createTransaction = <TCode extends string & { capability: any }>(
+    executionObject: TCode,
     keyset: string,
     sender: Sender,
     options?: TTransactionOptions,
-    capabilities?: (withCapability: ExtractType<TCommand>) => ICapabilityItem[]
+    capabilities?: (
+      withCapability: ExtractType<{ payload: { funs: [TCode] } }>
+    ) => ICapabilityItem[]
   ) => {
     const { chain: chainId, networkId } = _getOptions(options);
 
@@ -116,16 +112,17 @@ export const usePact = async () => {
       .addKeyset(keyset, "keys-all", sender.publicKey)
       .setNetworkId(networkId) //fast-development - https://github.com/kadena-community/crowdfund
       .setMeta({ chainId, sender: sender.account })
-      .addSigner(sender.publicKey, capabilities)
+      .addSigner(sender.publicKey, capabilities as any)
       .createTransaction();
   };
 
-  const createSenderObject = (publicKey: Key): Sender => {
+  const createSenderObject = (account: Account, publicKey: Key): Sender => {
     return {
-      account: `k:${publicKey}`,
+      account: account,
       publicKey: publicKey,
     };
   };
+
   type TSignTransactionOptions = {
     networkId?: string;
     chain?: IPactCommand["meta"]["chainId"];
@@ -137,13 +134,6 @@ export const usePact = async () => {
 
   const listen = async (requestKey: string): Promise<ICommandResult> => {
     return await kadenaClient.listen(requestKey, {
-      networkId: networkId.value,
-      chainId: chain.value,
-    });
-  };
-
-  const poll = async (requestKeys: string[]) => {
-    return kadenaClient.pollStatus(requestKeys, {
       networkId: networkId.value,
       chainId: chain.value,
     });
@@ -168,10 +158,13 @@ export const usePact = async () => {
   ): Promise<{ requestKey: string | null }> => {
     await connect();
     try {
-      if (!publicKey.value)
-        throw new Error("Public key required to build transaction");
+      if (!account.value || !publicKey.value) {
+        throw new Error(
+          "Account and public key are required to build transaction"
+        );
+      }
 
-      const sender = createSenderObject(publicKey.value);
+      const sender = createSenderObject(account.value, publicKey.value);
       // this is from the wallet
       const keyset = "ks";
       const cmd = createProjectObject({
@@ -182,15 +175,14 @@ export const usePact = async () => {
           startsAt: new Date(form.startsAt),
           finishesAt: new Date(form.finishesAt),
         },
-        hardCap: form.hardCap,
-        softCap: form.softCap,
+        hardCap: Number(form.hardCap),
+        softCap: Number(form.softCap),
         keyset,
       });
       const transaction = createTransaction(cmd, keyset, sender);
       const signedCommand = await signTransaction(transaction);
 
       if (isSignedCommand(signedCommand)) {
-        const url = ""; // this will be the local url for devnet and should pass in below
         const requestKey = await submitCommand(signedCommand);
         saveToRequestKeyLocalStorage(requestKey, "create");
         pollPendingRequests().then(() => null);
@@ -209,16 +201,19 @@ export const usePact = async () => {
   ): Promise<{ requestKey: string | null }> => {
     await connect();
     try {
-      if (!publicKey.value)
-        throw new Error("Public key required to build transaction");
+      if (!account.value || !publicKey.value) {
+        throw new Error(
+          "Account and public key are required to build transaction"
+        );
+      }
 
-      const sender = createSenderObject(publicKey.value);
+      const sender = createSenderObject(account.value, publicKey.value);
       // this is from the wallet
       const keyset = "ks";
       const cmd = createFundObject({
         projectId: form.id,
         funder: sender.account,
-        amount: form.amount,
+        amount: Number(form.amount),
       });
       const transaction = createTransaction(
         cmd,
@@ -233,7 +228,6 @@ export const usePact = async () => {
       const signedCommand = await signTransaction(transaction);
 
       if (isSignedCommand(signedCommand)) {
-        const url = ""; // this will be the local url for devnet and should pass in below
         const requestKey = await submitCommand(signedCommand);
         saveToRequestKeyLocalStorage(requestKey, "fund");
         pollPendingRequests().then(() => null);
