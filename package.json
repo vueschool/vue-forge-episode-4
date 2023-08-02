@@ -1,6 +1,7 @@
 {
   "name": "nuxt-app",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "nuxt build",
     "supabase:start": "npx supabase start",
@@ -15,15 +16,31 @@
     "kadena:cli": "docker run --rm -it -v $(pwd):/app/ --add-host=devnet:host-gateway enof/kda-cli",
     "kadena:types": "npx pactjs contract-generate --contract=free.crowdfund --api=https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/0/pact && npx pactjs contract-generate --contract=free.crowdfund --api=https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/0/pact",
     "kadena:fund": "npm run kadena:cli -- --profile=.fund-profile.json",
-    "kadena:deploy": "npm run kadena:cli -- --profile=.deploy-profile.json"
+    "kadena:deploy": "npm run kadena:cli -- --profile=.deploy-profile.json",
+    "test": "wdio run ./tests/wdio.local.conf.ts",
+    "test:sauce": "wdio run ./tests/wdio.sauce.conf.ts"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.0.2",
     "@nuxt/devtools": "latest",
     "@nuxtjs/supabase": "^0.3.8",
+    "@testing-library/vue": "^7.0.0",
+    "@types/mocha": "^10.0.1",
     "@types/node": "^18",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "@vue/test-utils": "^2.4.1",
+    "@wdio/cli": "^8.14.2",
+    "@wdio/local-runner": "^8.14.2",
+    "@wdio/mocha-framework": "^8.14.0",
+    "@wdio/sauce-service": "^8.14.2",
+    "@wdio/spec-reporter": "^8.14.0",
+    "chromedriver": "^115.0.0",
     "nuxt": "^3.6.3",
-    "supabase": "^1.77.9"
+    "supabase": "^1.77.9",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6",
+    "wdio-chromedriver-service": "^8.1.1",
+    "wdio-nuxt-service": "^0.1.1"
   },
   "dependencies": {
     "@kadena/client": "1.0.0-alpha.8",
