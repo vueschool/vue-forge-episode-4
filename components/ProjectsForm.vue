@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { readKeyset } from "@kadena/client";
+import { getClient } from "@kadena/client";
+import { literal } from "@kadena/client";
+import { Pact } from "@kadena/client";
+import { PactNumber } from "@kadena/pactjs";
 import { toTypedSchema } from "@vee-validate/zod";
+import { channel } from "diagnostics_channel";
+import { nanoid } from "nanoid";
 import * as zod from "zod";
 
 // Validation
@@ -44,6 +51,7 @@ const validationSchema = toTypedSchema(
 // Set initial form values
 // and keep up with form state
 const form = reactive({
+  projectId: nanoid(),
   title: "",
   description: "",
   image: "",
@@ -92,9 +100,77 @@ const submitForm = async () => {
   // from the beginning of today to a future time today (20 mins from now)
   const startsAt = getExactStartTimeFromDateField(form.startsAt);
 
-  // 👉 this is where you will do your saving to the blockchain and the DB
+  const { asKda: hardCapAsKda } = useKdaUsd(form.hardCap, "usd");
+  const { asKda: softCapAsKda } = useKdaUsd(form.softCap, "usd");
 
-  useAlerts().success("Project created");
+  const { account, publicKey, signTransaction } = useWallet();
+
+  if (!account.value) {
+    throw createError("account is undefined!");
+  }
+
+  if (!publicKey.value) {
+    throw createError("publicKey is undefined!");
+  }
+
+  if (!softCapAsKda.value || !hardCapAsKda.value) {
+    throw createError("softCap or hardCap is undefined!");
+  }
+
+  const unsignedTransaction = Pact.builder
+    .execution(
+      Pact.modules["free.crowdfund"]["create-project"](
+        form.projectId,
+        form.title,
+        literal("coin"),
+        new PactNumber(hardCapAsKda.value.toString()).toPactDecimal(),
+        new PactNumber(softCapAsKda.value.toString()).toPactDecimal(),
+        new Date(startsAt),
+        new Date(form.finishesAt),
+        account.value,
+        readKeyset("my-keyset")
+      )
+    )
+    .addKeyset("my-keyset", "keys-all", publicKey.value)
+    .addSigner(publicKey.value)
+    .setNetworkId("fast-development")
+    .setMeta({ chainId: "0", sender: account.value })
+    .createTransaction();
+
+  const signedTransaction = await signTransaction(unsignedTransaction);
+
+  const kadenaClient = getClient(
+    ({ chainId, networkId }) =>
+      `http://127.0.0.1:8080/chainweb/0.0/${networkId}/chain/${chainId}/pact`
+  );
+
+  const requestKey = await kadenaClient.submit(signedTransaction);
+
+  const pollResult = await kadenaClient.pollStatus(requestKey, {
+    interval: 1000,
+    onPoll: (requestKey) => {
+      useAlerts().info(`Polling ${requestKey}`);
+    },
+  });
+
+  const transactionResult = pollResult[requestKey].result;
+
+  if (transactionResult.status === "failure") {
+    useAlerts().error("Something went wrong, please try again!");
+  } else if (transactionResult.status === "success") {
+    const { uuid } = await createProjectInDB({
+      ...form,
+      startsAt,
+      excerpt: `${form.description.substring(0, 100)}`,
+      image: form.image || "https://placehold.co/500x320",
+      softCap: softCapAsKda.value.toString(),
+      hardCap: hardCapAsKda.value.toString(),
+      requestKey,
+    });
+
+    useAlerts().success("Project created");
+    navigateTo(`/projects/${uuid}`);
+  }
 };
 </script>
 
