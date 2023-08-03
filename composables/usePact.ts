@@ -95,6 +95,18 @@ export const usePact = async () => {
 		)
 	}
 	
+	const createSucceedObject = ({ projectId }: TCancel) => {
+		return Pact.modules['free.crowdfund']['succeed-project'](
+			projectId
+		)
+	}
+	
+	const createFailObject = ({ projectId }: TCancel) => {
+		return Pact.modules['free.crowdfund']['fail-project'](
+			projectId
+		)
+	}
+	
 	const _getOptions = (
 		options?: TTransactionOptions | TSignTransactionOptions
 	) => {
@@ -230,6 +242,88 @@ export const usePact = async () => {
 					withCapability('coin.GAS'),
 					withCapability('free.crowdfund.PROJECT_OWNER', projectId),
 					withCapability('free.crowdfund.CANCEL', projectId)
+				]
+			)
+			const signedCommand = await signTransaction(transaction)
+			
+			if (isSignedCommand(signedCommand)) {
+				const url = '' // this will be the local url for devnet and should pass in below
+				const requestKey = await submitCommand(signedCommand)
+				saveToRequestKeyLocalStorage(requestKey, 'cancel')
+				pollPendingRequests().then(() => null)
+				return { requestKey }
+			}
+		} catch (err) {
+			console.log(err)
+			// alert there was an error submitting to blockchain
+		}
+		
+		return { requestKey: null }
+	}
+	
+	const succeed = async (
+		projectId: string
+	): Promise<{ requestKey: string | null }> => {
+		await connect()
+		try {
+			if (!publicKey.value)
+				throw new Error('Public key required to build transaction')
+			
+			const sender = createSenderObject(publicKey.value)
+			// this is from the wallet
+			const keyset = 'ks'
+			const cmd = createSucceedObject({ projectId })
+			
+			const transaction = createTransaction(
+				cmd,
+				keyset,
+				sender,
+				{},
+				(withCapability) => [
+					withCapability('coin.GAS'),
+					withCapability('free.crowdfund.PROJECT_OWNER', projectId),
+					withCapability('free.crowdfund.SUCCESS', projectId)
+				]
+			)
+			const signedCommand = await signTransaction(transaction)
+			
+			if (isSignedCommand(signedCommand)) {
+				const url = '' // this will be the local url for devnet and should pass in below
+				const requestKey = await submitCommand(signedCommand)
+				saveToRequestKeyLocalStorage(requestKey, 'cancel')
+				pollPendingRequests().then(() => null)
+				return { requestKey }
+			}
+		} catch (err) {
+			console.log(err)
+			// alert there was an error submitting to blockchain
+		}
+		
+		return { requestKey: null }
+	}
+	
+	const fail = async (
+		projectId: string
+	): Promise<{ requestKey: string | null }> => {
+		await connect()
+		try {
+			if (!publicKey.value)
+				throw new Error('Public key required to build transaction')
+			
+			const sender = createSenderObject(publicKey.value)
+			// this is from the wallet
+			const keyset = 'ks'
+			const cmd = createFailObject({ projectId })
+			
+			const transaction = createTransaction(
+				cmd,
+				keyset,
+				sender,
+				{},
+				(withCapability) => [
+					withCapability('coin.GAS'),
+					withCapability('free.crowdfund.PROJECT_OWNER', projectId),
+					withCapability('free.crowdfund.FAIL', projectId)
 				]
 			)
 			const signedCommand = await signTransaction(transaction)
@@ -396,6 +490,8 @@ export const usePact = async () => {
 		create,
 		fund,
 		cancel,
+		succeed,
+		fail,
 		pollPendingRequests,
 		getProjectStatus,
 		getProjectAccount,

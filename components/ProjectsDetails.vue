@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { NodeJS } from 'timers'
 import { useProjects } from "~/composables/useProjects";
 type ProjectProps = {
   uuid: string;
@@ -41,7 +40,7 @@ const blockchainStatus = ref<TBlockchainStatus>({
 const { item: project, fetchOne } = useProjects();
 
 await useAsyncData("fetch-project", () => fetchOne({ uuid: props.uuid }));
-const { getProjectStatus, getProjectAccount, cancel } = await usePact()
+const { getProjectStatus, fail, succeed, cancel } = await usePact()
 
 const status = computed(() => {
 	const states = {
@@ -53,6 +52,7 @@ const status = computed(() => {
 		5: "ACTIVE"
 	}
 	
+	if (blockchainStatus.value?.status?.int === 1) return states[1]
 	if (project.status === 'pending') return states[4]
 	
 	if (blockchainStatus.value.startDate.time && new Date(blockchainStatus.value.startDate.time).valueOf() < Date.now()) {
@@ -66,7 +66,7 @@ const isProjectOwner = computed(() => {
 	return blockchainStatus.value?.['project-owner'] === account.value
 })
 
-const showOwnerActions = computed(() => false)
+const showOwnerActions = computed(() => true)
 
 const getBlockchainProjectStatus = async () => {
 	if (project.value.projectId) {
@@ -93,13 +93,30 @@ const onFunded = () => {
 	setTimeout(() => {
 		getBlockchainProjectStatus()
 	}, 5000)
-	
 }
 
-const onBeforeCancel = () => {
+const onBeforeCancel = async () => {
 	// todo: alert
-	
-	cancel(props.uuid)
+	await cancel(blockchainStatus.value?.projectId)
+	setTimeout(() => {
+		getBlockchainProjectStatus()
+	}, 5000)
+}
+
+
+const onBeforeSucceed = async () => {
+	// todo: alert
+	await succeed(blockchainStatus.value?.projectId)
+	setTimeout(() => {
+		getBlockchainProjectStatus()
+	}, 5000)
+}
+const onBeforeFail = async () => {
+	// todo: alert
+	await fail(blockchainStatus.value?.projectId)
+	setTimeout(() => {
+		getBlockchainProjectStatus()
+	}, 5000)
 }
 
 onMounted(() => {
@@ -114,6 +131,21 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="mx-auto mb-20 max-w-7xl">
+	  <Transition
+		  appear
+		  enter-active-class="transition ease-out duration-300"
+		  enter-from-class="opacity-0"
+		  enter-to-class="opacity-100"
+		  leave-active-class="transition ease-in duration-300"
+		  leave-from-class="opacity-100"
+		  leave-to-class="opacity-0"
+	  >
+	  <div v-if="status === 'CANCELLED'" class="bg-white/30 backdrop-blur absolute inset-0 flex items-center">
+		  <div class="translate-x-96 border-8 rounded-xl w-96 h-40 flex items-center justify-center border-red-500 bg-red-white/50 backdrop-blur -rotate-45">
+			  <div class="text-4xl text-red-500 uppercase">Cancelled</div>
+		  </div>
+	  </div>
+	  </Transition>
     <div class="w-full py-12 h-44">
       <h3 class="text-3xl">
         {{ project.title }}
@@ -128,17 +160,18 @@ onBeforeUnmount(() => {
           class="object-cover w-full aspect-video"
         />
       </div>
-      <div class="h-full col-span-4">
+      
+	    <div  class="h-full col-span-4">
         <div
           class="relative flex flex-col items-center justify-start w-full h-full px-8 space-y-4"
         >
 	        <div v-if="isProjectOwner && showOwnerActions" class="w-full flex flex-col items-center justify-between space-y-4">
 		        <div class="w-full">
-			        <button class="btn w-full btn-error">Cancel Project</button>
+			        <button :disabled="status !== 'CREATED'" @click="onBeforeCancel" class="btn w-full btn-error">Cancel Project</button>
 		        </div>
 		        <div class="w-full flex items-center justify-between space-x-4">
-			        <button class="btn btn-primary flex-1">Succeed Project</button>
-			        <button class="btn btn-warning flex-1">Fail Project</button>
+			        <button :disabled="status !== 'ACTIVE'"  @click="onBeforeSucceed" class="btn btn-primary flex-1">Succeed Project</button>
+			        <button :disabled="status !== 'ACTIVE'" @click="onBeforeFail" class="btn btn-warning flex-1">Fail Project</button>
 		        </div>
 	        </div>
 	        <div class="w-full">
