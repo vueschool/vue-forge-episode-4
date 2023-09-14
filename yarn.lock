@@ -684,29 +684,27 @@
     buffer "^6.0.3"
     tweetnacl "^1.0.3"
 
-"@kadena/pactjs-cli@1.0.0-alpha.7":
-  version "1.0.0-alpha.7"
-  resolved "https://registry.yarnpkg.com/@kadena/pactjs-cli/-/pactjs-cli-1.0.0-alpha.7.tgz#952e85d9466fc31cb62b7b49d511e049fc09f645"
-  integrity sha512-Tcbn2FxjeYzC3sMd+Y8xnF6NvW+vUsuwm4YQLBD8Vt1Kabjn0z39ZjjvzIZSxz6kMXaVTbI/6BeCzasd23kGNw==
+"@kadena/pactjs-cli@1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@kadena/pactjs-cli/-/pactjs-cli-1.3.0.tgz#640e516e55543bea1300e7a88c697b707ab4c152"
+  integrity sha512-swCv2W/WZdbfGkqUCtP1Gy0BV0XGJKzbuaqGOXsaHS0I2BMKFyJLOOVt88ksoq8Aw1MiF/tsR+vr08wj38pczg==
   dependencies:
-    "@kadena/pactjs-generator" "1.0.0-alpha.7"
+    "@kadena/pactjs-generator" "1.3.0"
     commander "^9.3.0"
     cross-fetch "~3.1.5"
     debug "~4.3.4"
     mkdirp "~1.0.4"
-    rimraf "~3.0.2"
-    yaml "~2.1.1"
+    rimraf "~5.0.1"
     zod "~3.18.0"
 
-"@kadena/pactjs-generator@1.0.0-alpha.7":
-  version "1.0.0-alpha.7"
-  resolved "https://registry.yarnpkg.com/@kadena/pactjs-generator/-/pactjs-generator-1.0.0-alpha.7.tgz#7ecd280e86c073147a4e83237daaec124e242cf8"
-  integrity sha512-f1FGRE1jaQ1Kd88Zkod4KtICoy05c0AX8YikgykvQND+ZAFd2PiSK6J6ls5xvvVwoPy//ceMRiHmu6LnGKEEiQ==
+"@kadena/pactjs-generator@1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@kadena/pactjs-generator/-/pactjs-generator-1.3.0.tgz#c60f4411f5f02cd27e726a1cd87386ccc9f11f36"
+  integrity sha512-LE0qtcdohAniMyXuvd36UN2ndi/Jg24l9JYgZX1+TMHyeZLfMhkdP69NRJsSxUzTYwmIZoVEyoesanpFxhXB8Q==
   dependencies:
     memfs "~3.5.1"
     moo "~0.5.1"
     nearley "~2.20.1"
-    yaml "~2.1.1"
 
 "@kadena/pactjs@0.3.0", "@kadena/pactjs@^0.3.0":
   version "0.3.0"
@@ -4101,6 +4099,17 @@ glob@^10.2.2:
     minipass "^5.0.0 || ^6.0.2 || ^7.0.0"
     path-scurry "^1.10.1"
 
+glob@^10.2.5:
+  version "10.3.4"
+  resolved "https://registry.yarnpkg.com/glob/-/glob-10.3.4.tgz#c85c9c7ab98669102b6defda76d35c5b1ef9766f"
+  integrity sha512-6LFElP3A+i/Q8XQKEvZjkEWEOTgAIALR9AO2rwT8bgPhDd1anmqDJDZ6lLddI4ehxxxR1S5RIqKe1uapMQfYaQ==
+  dependencies:
+    foreground-child "^3.1.0"
+    jackspeak "^2.0.3"
+    minimatch "^9.0.1"
+    minipass "^5.0.0 || ^6.0.2 || ^7.0.0"
+    path-scurry "^1.10.1"
+
 glob@^7.1.3, glob@^7.1.4, glob@^7.2.0:
   version "7.2.3"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.2.3.tgz#b8df0fb802bbfa8e89bd1d938b4e16578ed44f2b"
@@ -6748,12 +6757,19 @@ reusify@^1.0.4:
   resolved "https://registry.yarnpkg.com/reusify/-/reusify-1.0.4.tgz#90da382b1e126efc02146e90845a88db12925d76"
   integrity sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==
 
-rimraf@^3.0.2, rimraf@~3.0.2:
+rimraf@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-3.0.2.tgz#f1a5402ba6220ad52cc1282bac1ae3aa49fd061a"
   integrity sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==
   dependencies:
     glob "^7.1.3"
+
+rimraf@~5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-5.0.1.tgz#0881323ab94ad45fec7c0221f27ea1a142f3f0d0"
+  integrity sha512-OfFZdwtd3lZ+XZzYP/6gTACubwFcHdLRqS9UX3UwpU2dnGQYkPFISRwvM3w9IiB2w7bW5qGo/uAwE4SmXXSKvg==
+  dependencies:
+    glob "^10.2.5"
 
 rollup-plugin-visualizer@^5.9.2:
   version "5.9.2"
